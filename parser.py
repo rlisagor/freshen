@@ -1,11 +1,13 @@
 from pyparsing import *
-
+import re
+import copy
 
 def parse_file(fname):
     fp = open(fname)
     r = parse(fp.read())
     fp.close()
     return r
+
 
 class Feature(object):
     
@@ -17,6 +19,18 @@ class Feature(object):
     def __repr__(self):
         return '<Feature "%s": %d scenario(s)>' % (self.name, len(self.scenarios))
 
+    def dump(self, expand=False):
+        print "Feature: %s" % self.name
+        for line in self.description:
+            print "   ", line
+        print
+        for sco in self.scenarios:
+            if expand:
+                for sc in sco.iterate():
+                    sc.dump()
+            else:
+                sco.dump()
+
 class Scenario(object):
     
     def __init__(self, name, steps):
@@ -25,6 +39,15 @@ class Scenario(object):
     
     def __repr__(self):
         return '<Scenario "%s">' % self.name
+
+    def iterate(self):
+        yield self
+
+    def dump(self):
+        print "    Scenario:", self.name
+        for s in self.steps:
+            s.dump()
+        print
 
 class ScenarioOutline(object):
     
@@ -35,22 +58,61 @@ class ScenarioOutline(object):
 
     def __repr__(self):
         return '<ScenarioOutline "%s">' % self.name
+    
+    def iterate(self):
+        for values in self.examples.iterrows():
+            new_steps = []
+            for step in self.steps:
+                new_steps.append(step.set_values(values))
+            yield Scenario(self.name, new_steps)
+
+    def dump(self):
+        print "    Scenario Outline:", self.name
+        for s in self.steps:
+            s.dump()
+        print
+        self.examples.dump()
 
 class Step(object):
     
     def __init__(self, step_type, match):
         self.step_type = step_type
         self.match = match
-        
+    
     def __repr__(self):
         return '<%s "%s">' % (self.step_type, self.match)
+
+    def set_values(self, value_dict):
+        result = copy.deepcopy(self)
+        for name, value in value_dict.iteritems():
+            result.match = result.match.replace("<%s>" % name, value)
+        return result
+
+    def dump(self):
+        print "       ", self.step_type, self.match
+
 
 class Table(object):
     
     def __init__(self, headings, rows):
+        assert [len(r) == len(headings) for r in rows], "Malformed table"
+        
         self.headings = headings
         self.rows = rows
 
+    def __repr__(self):
+        return "<Table: %dx%d>" % (len(self.headings), len(self.rows))
+
+    def iterrows(self):
+        for row in self.rows:
+            yield dict(zip(self.headings, row))
+
+    def dump(self):
+        print "    Examples:"
+        all_rows = [self.headings] + self.rows
+        for r in all_rows:
+            print "        | " + " | ".join(r) + " |"
+        print
 
 def create_object(klass):
     def untokenize(toks):
