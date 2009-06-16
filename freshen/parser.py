@@ -25,6 +25,12 @@ class Feature(object):
             else:
                 sco.dump()
 
+    def iter_scenarios(self):
+        for sco in self.scenarios:
+            for sc in sco.iterate():
+                yield sc
+
+
 class Scenario(object):
     
     def __init__(self, name, steps):
