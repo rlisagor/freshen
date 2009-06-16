@@ -2,12 +2,6 @@ from pyparsing import *
 import re
 import copy
 
-def parse_file(fname):
-    fp = open(fname)
-    r = parse(fp.read())
-    fp.close()
-    return r
-
 
 class Feature(object):
     
@@ -154,4 +148,10 @@ def parse(text):
                       Group(OneOrMore(scenario | scenario_outline))).setParseAction(create_object(Feature))
     
     return feature.parseString(text)[0]
+
+def parse_file(fname):
+    fp = open(fname)
+    r = parse(fp.read())
+    fp.close()
+    return r
 
