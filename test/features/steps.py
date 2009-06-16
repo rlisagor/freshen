@@ -1,7 +1,6 @@
 from nose.tools import *
-import sys
 from freshen import *
-sys.path.append("/home/roman/dev/freshen/test")
+
 import calculator
 
 

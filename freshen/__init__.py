@@ -39,11 +39,14 @@ def find_and_run_match(s):
 
 
 class FreshenTestCase(unittest.TestCase):
-    
-    def __init__(self, scenario, before, after):
+
+    def __init__(self, feature, scenario, before, after):
+        self.feature = feature
         self.scenario = scenario
         self.before = before
         self.after = after
+        
+        self.description = feature.name + ": " + scenario.name
         super(FreshenTestCase, self).__init__()
     
     def setUp(self):
@@ -84,7 +87,10 @@ class FreshenNosePlugin(nose.plugins.Plugin):
         feat, before, after = load_feature(filename)
         
         for sc in feat.iter_scenarios():
-            yield FreshenTestCase(sc, before, after)
+            yield FreshenTestCase(feat, sc, before, after)
+
+    def describeTest(self, test):
+        return test.test.description
 
 
 
