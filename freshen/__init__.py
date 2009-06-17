@@ -5,9 +5,14 @@ import os
 import re
 import parser
 import traceback
-import nose.plugins
 import logging
 import unittest
+from nose.plugins import Plugin
+from nose.plugins.skip import SkipTest
+from nose.plugins.errorclass import ErrorClass, ErrorClassPlugin
+
+
+from freshen.parser import Step
 
 spec_registry = {}
 
@@ -24,17 +29,29 @@ Then = step
 
 log = logging.getLogger('nose.plugins')
 
-def find_and_run_match(s):
+class FreshenException(Exception):
+    pass
+
+class UndefinedStep(Exception):
+    
+    def __init__(self, step):
+        p = os.path.relpath(step.src_file, os.getcwd())
+        super(UndefinedStep, self).__init__(
+            '"%s" # %s:%d' % (step.match,
+                            p,
+                            step.src_line))
+
+def find_and_run_match(step):
     result = None
     for r, f in spec_registry.iteritems():
-        matches = r.match(s)
+        matches = r.match(step.match)
         if matches:
             if result:
-                raise Exception("Ambiguous: %s" % s)
+                raise FreshenException("Ambiguous: %s" % step.match)
             result = f, matches
     
     if not result:
-        raise Exception("Could not match to definition: %s" % s)
+        raise UndefinedStep(step)
     return result[0](*result[1].groups())
 
 
@@ -55,8 +72,8 @@ class FreshenTestCase(unittest.TestCase):
     
     def runTest(self):
         for step in self.scenario.steps:
-            res = find_and_run_match(step.match)
-
+            res = find_and_run_match(step)
+    
     def tearDown(self):
         if self.after:
             self.after()
@@ -65,15 +82,32 @@ def load_feature(fname):
     fname = os.path.abspath(fname)
     path = os.path.dirname(fname)
     
-    info = imp.find_module("steps", [path])
-    mod = imp.load_module("steps", *info)
+    before = after = None
+    try:
+        info = imp.find_module("steps", [path])
+        mod = imp.load_module("steps", *info)
 
-    before = getattr(mod, 'before', None)
-    after = getattr(mod, 'after', None)
+        before = getattr(mod, 'before', None)
+        after = getattr(mod, 'after', None)
+    except ImportError:
+        pass
+    
     return parser.parse_file(fname), before, after
 
 
-class FreshenNosePlugin(nose.plugins.Plugin):
+class FreshenErrorPlugin(ErrorClassPlugin):
+
+    enabled = True
+    undefined = ErrorClass(UndefinedStep,
+                           label="UNDEFINED",
+                           isfailure=False)
+
+    def options(self, parser, env):
+        # Forced to be on!
+        pass
+
+
+class FreshenNosePlugin(Plugin):
     
     name = "freshen"
     
@@ -88,9 +122,9 @@ class FreshenNosePlugin(nose.plugins.Plugin):
         
         for sc in feat.iter_scenarios():
             yield FreshenTestCase(feat, sc, before, after)
-
+    
     def describeTest(self, test):
-        return test.test.description
-
+        if isinstance(test.test, FreshenTestCase):
+            return test.test.description
 
 

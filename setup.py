@@ -16,7 +16,8 @@ setup(
     py_modules = ['freshen'],
     entry_points = {
         'nose.plugins.0.10': [
-            'freshen = freshen:FreshenNosePlugin'
+            'freshen = freshen:FreshenNosePlugin',
+            'freshenerr = freshen:FreshenErrorPlugin'
             ]
         }
 

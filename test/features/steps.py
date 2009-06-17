@@ -23,4 +23,5 @@ def press(button):
 @Then("the result should be (.*) on the screen")
 def check_result(value):
     assert_equal(str(result), value)
+    assert False
 

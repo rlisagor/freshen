@@ -114,17 +114,23 @@ class Table(object):
             print "        | " + " | ".join(r) + " |"
         print
 
-def create_object(klass):
-    def untokenize(toks):
-        result = []
-        for t in toks:
-            if isinstance(t, ParseResults):
-                t = t.asList()
-            result.append(t)
-        return klass(*result)
-    return untokenize
 
-def parse(text):
+def parse_file(fname):
+
+    def create_object(klass):
+        def untokenize(s, loc, toks):
+            result = []
+            for t in toks:
+                if isinstance(t, ParseResults):
+                    t = t.asList()
+                result.append(t)
+            obj = klass(*result)
+            obj.src_file = fname
+            obj.src_line = lineno(loc, s)
+            return obj
+        return untokenize
+
+    
     following_text = empty + restOfLine + Suppress(lineEnd)
     section_header = lambda name: Suppress(name + ":") + following_text
 
@@ -153,11 +159,6 @@ def parse(text):
                       descr_block +
                       Group(OneOrMore(scenario | scenario_outline))).setParseAction(create_object(Feature))
     
-    return feature.parseString(text)[0]
+    return feature.parseFile(fname)[0]
 
-def parse_file(fname):
-    fp = open(fname)
-    r = parse(fp.read())
-    fp.close()
-    return r
 
