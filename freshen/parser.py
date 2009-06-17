@@ -156,7 +156,7 @@ def parse_file(fname):
                         examples).setParseAction(create_object(ScenarioOutline))
 
     feature        = (section_header("Feature") +
-                      descr_block +
+                      Optional(descr_block) +
                       Group(OneOrMore(scenario | scenario_outline))).setParseAction(create_object(Feature))
     
     return feature.parseFile(fname)[0]
