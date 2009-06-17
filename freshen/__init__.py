@@ -7,6 +7,7 @@ import parser
 import traceback
 import logging
 import unittest
+import sys
 from nose.plugins import Plugin
 from nose.plugins.skip import SkipTest
 from nose.plugins.errorclass import ErrorClass, ErrorClassPlugin
@@ -16,30 +17,39 @@ from freshen.parser import Step
 
 spec_registry = {}
 
-def step(spec):
+def step_decorator(spec):
     def wrapper(func):
         r = re.compile(spec)
         spec_registry[r] = func
         return func
     return wrapper
 
-Given = step
-When = step
-Then = step
+Given = step_decorator
+When = step_decorator
+Then = step_decorator
 
 log = logging.getLogger('nose.plugins')
 
 class FreshenException(Exception):
     pass
 
+class ExceptionWrapper(Exception):
+    
+    def __init__(self, e, step):
+        self.e = e
+        self.step = step
+
+def format_step(step):
+    p = os.path.relpath(step.src_file, os.getcwd())
+    return '"%s" # %s:%d' % (step.match,
+                             p,
+                             step.src_line)
+
 class UndefinedStep(Exception):
     
     def __init__(self, step):
         p = os.path.relpath(step.src_file, os.getcwd())
-        super(UndefinedStep, self).__init__(
-            '"%s" # %s:%d' % (step.match,
-                            p,
-                            step.src_line))
+        super(UndefinedStep, self).__init__(format_step(step))
 
 def find_and_run_match(step):
     result = None
@@ -52,7 +62,11 @@ def find_and_run_match(step):
     
     if not result:
         raise UndefinedStep(step)
-    return result[0](*result[1].groups())
+        
+    try:
+        return result[0](*result[1].groups())
+    except Exception, e:
+        raise ExceptionWrapper(sys.exc_info(), step)
 
 
 class FreshenTestCase(unittest.TestCase):
@@ -127,4 +141,14 @@ class FreshenNosePlugin(Plugin):
         if isinstance(test.test, FreshenTestCase):
             return test.test.description
 
+    def formatFailure(self, test, err):
+        if isinstance(test.test, FreshenTestCase):
+            ec, ev, tb = err
+            if ec is ExceptionWrapper:
+                orig_ec, orig_ev, orig_tb = ev.e
+                return (orig_ec, str(orig_ev) + "\n\n>> in " + format_step(ev.step), orig_tb)
+            else:
+                return err
+    
+    formatError = formatFailure
 
