@@ -1,4 +1,4 @@
-__all__ = ['Given', 'When', 'Then', 'And', 'run_steps']
+__all__ = ['Given', 'When', 'Then', 'And', 'run_steps', 'assert_looks_like']
 
 import imp
 import inspect
@@ -16,6 +16,8 @@ from freshen import parser
 
 import logging
 log = logging.getLogger('nose.plugins')
+
+__unittest = 1
 
 spec_registry = {}
 
@@ -42,6 +44,13 @@ def run_steps(spec):
     steps = parser.parse_steps(spec, fname, line)
     for s in steps:
         find_and_run_match(s)
+
+def assert_looks_like(first, second, msg=None):
+    """ Compare two strings if all contiguous whitespace is coalesced. """
+    first = re.sub("\s+", " ", first.strip())
+    second = re.sub("\s+", " ", second.strip())
+    if first != second:
+        raise AssertionError(msg or "%r does not look like %r" % (first, second))
 
 class FreshenException(Exception):
     pass
