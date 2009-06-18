@@ -1,10 +1,12 @@
 Todo
 ====
 
-- Better handling of errors in steps called from step definitions
+- Improve discovery of features and step definition modules
+- Parse exceptions should tell you which file they're in
 - Hooks
 - Tags
 - Backgrounds
+- Expose features and scenario outlines as test suites (?)
 - Documentation
 - License
 

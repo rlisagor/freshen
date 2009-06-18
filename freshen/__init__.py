@@ -42,6 +42,7 @@ def run_steps(spec):
     fname = caller.f_code.co_filename
     
     steps = parser.parse_steps(spec, fname, line)
+    
     for s in steps:
         find_and_run_match(s)
 
@@ -91,6 +92,8 @@ def find_and_run_match(step):
             return result[0](step.arg, *result[1].groups())
         else:
             return result[0](*result[1].groups())
+    except UndefinedStep:
+        raise
     except Exception, e:
         raise ExceptionWrapper(sys.exc_info(), step)
 
