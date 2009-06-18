@@ -2,6 +2,8 @@ from pyparsing import *
 import re
 import copy
 
+import logging
+log = logging.getLogger('nose.plugins')
 
 class Feature(object):
     
@@ -75,9 +77,10 @@ class ScenarioOutline(object):
 
 class Step(object):
     
-    def __init__(self, step_type, match):
+    def __init__(self, step_type, match, arg=None):
         self.step_type = step_type
         self.match = match
+        self.arg = arg
     
     def __repr__(self):
         return '<%s "%s">' % (self.step_type, self.match)
@@ -115,7 +118,7 @@ class Table(object):
         print
 
 
-def parse_file(fname):
+def parse_file(fname, convert=True):
 
     def create_object(klass):
         def untokenize(s, loc, toks):
@@ -130,35 +133,41 @@ def parse_file(fname):
             return obj
         return untokenize
 
+    def process_descr(s):
+        return [p.strip() for p in s[0].strip().split("\n")]
     
-    following_text = empty + restOfLine + Suppress(lineEnd)
+    following_text = empty + restOfLine
     section_header = lambda name: Suppress(name + ":") + following_text
-
-    descr_line     = ~section_header("Scenario") + ~section_header("Scenario Outline") + following_text
-    descr_block    = Group(OneOrMore(descr_line))
-
-    table_row      = Group(Suppress("|") + delimitedList(Regex("[^\|\s]+"), delim="|") + Suppress("|"))
-    table          = (table_row + Group(OneOrMore(table_row))).setParseAction(create_object(Table))
-
-    step           = lambda t: (Keyword(t) + following_text).setParseAction(create_object(Step))
-    steps          = Group(
-                         step("Given") + ZeroOrMore(step("And")) +
-                         step("When") + ZeroOrMore(step("And")) +
-                         step("Then") + ZeroOrMore(step("And")))
     
+    section_name   = Literal("Scenario") | Literal("Scenario Outline")
+    descr_block    = Group(SkipTo(section_name).setParseAction(process_descr))
+    
+    table_row      = Group(Suppress("|") +
+                           delimitedList(Suppress(empty) + CharsNotIn("| \t\n") + Suppress(empty), delim="|") +
+                           Suppress("|"))
+    table          = table_row + Group(OneOrMore(table_row))
+    
+    m_string       = QuotedString('"""', multiline=True, unquoteResults=True)
+    
+    step_name      = Keyword("Given") | Keyword("When") | Keyword("Then") | Keyword("And")
+    step           = step_name + following_text + Optional(table | m_string)
+    steps          = Group(OneOrMore(step))
+
     examples       = Suppress("Examples:") + table
-
-    scenario       = (section_header("Scenario") +
-                      steps).setParseAction(create_object(Scenario))
     
-    scenario_outline = (section_header("Scenario Outline") +
-                        steps +
-                        examples).setParseAction(create_object(ScenarioOutline))
-
-    feature        = (section_header("Feature") +
-                      Optional(descr_block) +
-                      Group(OneOrMore(scenario | scenario_outline))).setParseAction(create_object(Feature))
+    scenario       = Group(section_header("Scenario") + steps)
+    scenario_outline = section_header("Scenario Outline") + steps + examples
     
-    return feature.parseFile(fname)[0]
-
+    feature        = section_header("Feature") + descr_block + Group(OneOrMore(scenario | scenario_outline))
+    feature.ignore(pythonStyleComment)
+    
+    if convert:
+        table.setParseAction(create_object(Table))
+        step.setParseAction(create_object(Step))
+        scenario.setParseAction(create_object(Scenario))
+        scenario_outline.setParseAction(create_object(ScenarioOutline))
+        feature.setParseAction(create_object(Feature))
+        return feature.parseFile(fname)[0]
+    else:
+        return feature.parseFile(fname)
 

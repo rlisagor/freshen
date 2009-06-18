@@ -64,7 +64,10 @@ def find_and_run_match(step):
         raise UndefinedStep(step)
         
     try:
-        return result[0](*result[1].groups())
+        if step.arg is not None:
+            return result[0](step.arg, *result[1].groups())
+        else:
+            return result[0](*result[1].groups())
     except Exception, e:
         raise ExceptionWrapper(sys.exc_info(), step)
 
