@@ -157,7 +157,7 @@ def grammar(fname, convert=True, base_line=0):
     
     step_name      = Keyword("Given") | Keyword("When") | Keyword("Then") | Keyword("And")
     step           = step_name + following_text + Optional(table | m_string)
-    steps          = Group(OneOrMore(step))
+    steps          = Group(ZeroOrMore(step))
 
     examples       = Suppress("Examples:") + table
     
