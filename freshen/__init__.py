@@ -11,6 +11,7 @@ import sys
 from nose.plugins import Plugin
 from nose.plugins.skip import SkipTest
 from nose.plugins.errorclass import ErrorClass, ErrorClassPlugin
+from nose.selector import TestAddress
 from freshen import parser
 
 import logging
@@ -154,6 +155,16 @@ class FreshenNosePlugin(Plugin):
         
         for sc in feat.iter_scenarios():
             yield FreshenTestCase(feat, sc, before, after)
+    
+    def loadTestsFromName(self, name, _=None):
+        addr = TestAddress(name)
+        if addr.filename.endswith(".feature") and os.path.isfile(addr.filename):
+            result = self.loadTestsFromFile(addr.filename)
+            if addr.call:
+                yield [t for t in result][int(addr.call) - 1]
+            else:
+                for t in result:
+                    yield t
     
     def describeTest(self, test):
         if isinstance(test.test, FreshenTestCase):
