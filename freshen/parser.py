@@ -135,6 +135,9 @@ def parse_file(fname, convert=True):
 
     def process_descr(s):
         return [p.strip() for p in s[0].strip().split("\n")]
+        
+    def process_m_string(s):
+        return s[0].strip()
     
     following_text = empty + restOfLine
     section_header = lambda name: Suppress(name + ":") + following_text
@@ -142,12 +145,15 @@ def parse_file(fname, convert=True):
     section_name   = Literal("Scenario") | Literal("Scenario Outline")
     descr_block    = Group(SkipTo(section_name).setParseAction(process_descr))
     
+    empty_not_n    = empty.copy().setWhitespaceChars(" \t")
     table_row      = Group(Suppress("|") +
-                           delimitedList(Suppress(empty) + CharsNotIn("| \t\n") + Suppress(empty), delim="|") +
+                           delimitedList(Suppress(empty_not_n) +
+                                         CharsNotIn("| \t\n") +
+                                         Suppress(empty_not_n), delim="|") +
                            Suppress("|"))
     table          = table_row + Group(OneOrMore(table_row))
     
-    m_string       = QuotedString('"""', multiline=True, unquoteResults=True)
+    m_string       = QuotedString('"""', multiline=True, unquoteResults=True).setParseAction(process_m_string)
     
     step_name      = Keyword("Given") | Keyword("When") | Keyword("Then") | Keyword("And")
     step           = step_name + following_text + Optional(table | m_string)
@@ -155,7 +161,7 @@ def parse_file(fname, convert=True):
 
     examples       = Suppress("Examples:") + table
     
-    scenario       = Group(section_header("Scenario") + steps)
+    scenario       = section_header("Scenario") + steps
     scenario_outline = section_header("Scenario Outline") + steps + examples
     
     feature        = section_header("Feature") + descr_block + Group(OneOrMore(scenario | scenario_outline))

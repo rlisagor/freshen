@@ -8,13 +8,9 @@ Feature: Sample
       | a | b |
       | c | d |
 
-  Scenario: Failing2
-    Given failing
-        """
-        Testing
-        """
-  
   Scenario: Failing
     Given failing
-
+      """
+      hello
+      """
 
