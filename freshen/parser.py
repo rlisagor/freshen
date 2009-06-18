@@ -62,11 +62,12 @@ class ScenarioOutline(object):
         return '<ScenarioOutline "%s">' % self.name
     
     def iterate(self):
-        for values in self.examples.iterrows():
-            new_steps = []
-            for step in self.steps:
-                new_steps.append(step.set_values(values))
-            yield Scenario(self.name, new_steps)
+        for ex in self.examples:
+            for values in ex.table.iterrows():
+                new_steps = []
+                for step in self.steps:
+                    new_steps.append(step.set_values(values))
+                yield Scenario(self.name, new_steps)
 
     def dump(self):
         print "    Scenario Outline:", self.name
@@ -95,6 +96,13 @@ class Step(object):
         print "       ", self.step_type, self.match
 
 
+class Examples(object):
+
+    def __init__(self, name, table):
+        self.name = name
+        self.table = table
+
+
 class Table(object):
     
     def __init__(self, headings, rows):
@@ -111,7 +119,6 @@ class Table(object):
             yield dict(zip(self.headings, row))
 
     def dump(self):
-        print "    Examples:"
         all_rows = [self.headings] + self.rows
         for r in all_rows:
             print "        | " + " | ".join(r) + " |"
@@ -159,10 +166,10 @@ def grammar(fname, convert=True, base_line=0):
     step           = step_name + following_text + Optional(table | m_string)
     steps          = Group(ZeroOrMore(step))
 
-    examples       = Suppress("Examples:") + table
+    example        = section_header("Examples") + table
     
     scenario       = section_header("Scenario") + steps
-    scenario_outline = section_header("Scenario Outline") + steps + examples
+    scenario_outline = section_header("Scenario Outline") + steps + Group(OneOrMore(example))
     
     feature        = section_header("Feature") + descr_block + Group(OneOrMore(scenario | scenario_outline))
     
@@ -176,6 +183,7 @@ def grammar(fname, convert=True, base_line=0):
         step.setParseAction(create_object(Step))
         scenario.setParseAction(create_object(Scenario))
         scenario_outline.setParseAction(create_object(ScenarioOutline))
+        example.setParseAction(create_object(Examples))
         feature.setParseAction(create_object(Feature))
     
     return feature, steps
