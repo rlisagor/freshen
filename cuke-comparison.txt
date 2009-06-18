@@ -1,0 +1,6 @@
+Differences from Cucumber:
+
+- Obviously, there are no magical assertion methods on objects, use nose.tools.* instead
+- When calling steps from inside step definitions, you can pass a block of text which will get parsed the same way it does in a real .feature file
+- You cannot have multi-line feature or scenario names
+
