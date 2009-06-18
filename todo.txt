@@ -1,11 +1,10 @@
 Todo
 ====
 
-- Calling steps from within steps definitions
-- Multi-line names
-- Backgrounds
+- Better handling of errors in steps called from step definitions
+- Hooks
 - Tags
+- Backgrounds
 - Documentation
-- Import as many tests as possible from cucumber
 - License
 
