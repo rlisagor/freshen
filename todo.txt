@@ -1,12 +1,9 @@
 Todo
 ====
 
-- Proper error/success output
 - Calling steps from within steps definitions
 - Multi-line names
 - Backgrounds
-- Multi-line arguments to steps
-- Comments
 - Tags
 - Documentation
 - Import as many tests as possible from cucumber

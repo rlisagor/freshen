@@ -1,23 +1,25 @@
-__all__ = ['Given', 'When', 'Then', 'load_feature']
+__all__ = ['Given', 'When', 'Then', 'And', 'run_steps']
 
 import imp
+import inspect
 import os
 import re
 import parser
 import traceback
-import logging
 import unittest
 import sys
 from nose.plugins import Plugin
 from nose.plugins.skip import SkipTest
 from nose.plugins.errorclass import ErrorClass, ErrorClassPlugin
+from freshen import parser
 
-
-from freshen.parser import Step
+import logging
+log = logging.getLogger('nose.plugins')
 
 spec_registry = {}
 
 def step_decorator(spec):
+    """ Decorator to wrap step definitions in. Registers definition. """
     def wrapper(func):
         r = re.compile(spec)
         spec_registry[r] = func
@@ -27,8 +29,18 @@ def step_decorator(spec):
 Given = step_decorator
 When = step_decorator
 Then = step_decorator
+And = step_decorator
 
-log = logging.getLogger('nose.plugins')
+def run_steps(spec):
+    """ Called from within step definitions to run other steps. """
+    
+    caller = inspect.currentframe().f_back
+    line = caller.f_lineno - 1
+    fname = caller.f_code.co_filename
+    
+    steps = parser.parse_steps(spec, fname, line)
+    for s in steps:
+        find_and_run_match(s)
 
 class FreshenException(Exception):
     pass
@@ -52,6 +64,7 @@ class UndefinedStep(Exception):
         super(UndefinedStep, self).__init__(format_step(step))
 
 def find_and_run_match(step):
+    """ Look up the step in the registry, then run it """
     result = None
     for r, f in spec_registry.iteritems():
         matches = r.match(step.match)
@@ -96,6 +109,8 @@ class FreshenTestCase(unittest.TestCase):
             self.after()
 
 def load_feature(fname):
+    """ Load and parse a feature file. """
+
     fname = os.path.abspath(fname)
     path = os.path.dirname(fname)
     

@@ -118,8 +118,8 @@ class Table(object):
         print
 
 
-def parse_file(fname, convert=True):
-
+def grammar(fname, convert=True, base_line=0):
+    
     def create_object(klass):
         def untokenize(s, loc, toks):
             result = []
@@ -129,7 +129,7 @@ def parse_file(fname, convert=True):
                 result.append(t)
             obj = klass(*result)
             obj.src_file = fname
-            obj.src_line = lineno(loc, s)
+            obj.src_line = base_line + lineno(loc, s)
             return obj
         return untokenize
 
@@ -165,7 +165,11 @@ def parse_file(fname, convert=True):
     scenario_outline = section_header("Scenario Outline") + steps + examples
     
     feature        = section_header("Feature") + descr_block + Group(OneOrMore(scenario | scenario_outline))
-    feature.ignore(pythonStyleComment)
+    
+    # Ignore tags for now as they are not supported
+    tags           = OneOrMore("@" + Word(alphanums + "_"))
+    feature.ignore(tags).ignore(pythonStyleComment)
+    steps.ignore(tags).ignore(pythonStyleComment)
     
     if convert:
         table.setParseAction(create_object(Table))
@@ -173,7 +177,20 @@ def parse_file(fname, convert=True):
         scenario.setParseAction(create_object(Scenario))
         scenario_outline.setParseAction(create_object(ScenarioOutline))
         feature.setParseAction(create_object(Feature))
+    
+    return feature, steps
+
+def parse_file(fname, convert=True):
+    feature, _ = grammar(fname, convert)
+    if convert:
         return feature.parseFile(fname)[0]
     else:
         return feature.parseFile(fname)
+
+def parse_steps(spec, fname, base_line, convert=True):
+    _, steps = grammar(fname, convert, base_line)
+    if convert:
+        return steps.parseString(spec)[0]
+    else:
+        return steps.parseString(spec)
 
