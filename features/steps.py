@@ -1,5 +1,5 @@
 from freshen import *
-from nose.tools import *
+from freshen.checks import *
 
 import os
 import commands

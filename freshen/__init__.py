@@ -1,4 +1,4 @@
-__all__ = ['Given', 'When', 'Then', 'And', 'Before', 'After', 'AfterStep', 'run_steps', 'assert_looks_like']
+__all__ = ['Given', 'When', 'Then', 'And', 'Before', 'After', 'AfterStep', 'run_steps']
 
 import imp
 import inspect
@@ -64,14 +64,6 @@ def run_steps(spec):
     
     for s in steps:
         find_and_run_match(s)
-
-def assert_looks_like(first, second, msg=None):
-    """ Compare two strings if all contiguous whitespace is coalesced. """
-    first = re.sub("\s+", " ", first.strip())
-    second = re.sub("\s+", " ", second.strip())
-    if first != second:
-        raise AssertionError(msg or "%r does not look like %r" % (first, second))
-
 
 # --- Internals ---
 
