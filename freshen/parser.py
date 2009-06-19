@@ -15,18 +15,6 @@ class Feature(object):
     def __repr__(self):
         return '<Feature "%s": %d scenario(s)>' % (self.name, len(self.scenarios))
 
-    def dump(self, expand=False):
-        print "Feature: %s" % self.name
-        for line in self.description:
-            print "   ", line
-        print
-        for sco in self.scenarios:
-            if expand:
-                for sc in sco.iterate():
-                    sc.dump()
-            else:
-                sco.dump()
-
     def iter_scenarios(self):
         for sco in self.scenarios:
             for sc in sco.iterate():
@@ -45,11 +33,6 @@ class Scenario(object):
     def iterate(self):
         yield self
 
-    def dump(self):
-        print "    Scenario:", self.name
-        for s in self.steps:
-            s.dump()
-        print
 
 class ScenarioOutline(object):
     
@@ -69,12 +52,6 @@ class ScenarioOutline(object):
                     new_steps.append(step.set_values(values))
                 yield Scenario(self.name, new_steps)
 
-    def dump(self):
-        print "    Scenario Outline:", self.name
-        for s in self.steps:
-            s.dump()
-        print
-        self.examples.dump()
 
 class Step(object):
     
@@ -91,9 +68,6 @@ class Step(object):
         for name, value in value_dict.iteritems():
             result.match = result.match.replace("<%s>" % name, value)
         return result
-
-    def dump(self):
-        print "       ", self.step_type, self.match
 
 
 class Examples(object):
@@ -117,12 +91,6 @@ class Table(object):
     def iterrows(self):
         for row in self.rows:
             yield dict(zip(self.headings, row))
-
-    def dump(self):
-        all_rows = [self.headings] + self.rows
-        for r in all_rows:
-            print "        | " + " | ".join(r) + " |"
-        print
 
 
 def grammar(fname, convert=True, base_line=0):
@@ -166,7 +134,9 @@ def grammar(fname, convert=True, base_line=0):
     table          = table_row + Group(OneOrMore(table_row))
     
     m_string       = (Suppress(lineEnd + Literal('"""') + lineEnd).setWhitespaceChars(" \t") +
-                      SkipTo((lineEnd + Literal('"""')).setWhitespaceChars(" \t")).setWhitespaceChars("")).setParseAction(process_m_string)
+                      SkipTo((lineEnd +
+                              Literal('"""')).setWhitespaceChars(" \t")).setWhitespaceChars(""))
+    m_string.setParseAction(process_m_string)
     
     step_name      = Keyword("Given") | Keyword("When") | Keyword("Then") | Keyword("And")
     step           = step_name + following_text + Optional(table | m_string)
@@ -177,7 +147,10 @@ def grammar(fname, convert=True, base_line=0):
     scenario       = Optional(tags) + section_header("Scenario") + steps
     scenario_outline = Optional(tags) + section_header("Scenario Outline") + steps + Group(OneOrMore(example))
     
-    feature        = Optional(tags) + section_header("Feature") + descr_block + Group(OneOrMore(scenario | scenario_outline))
+    feature        = (Optional(tags) +
+                      section_header("Feature") +
+                      descr_block +
+                      Group(OneOrMore(scenario | scenario_outline)))
     
     # Ignore tags for now as they are not supported
     feature.ignore(pythonStyleComment)

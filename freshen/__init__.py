@@ -20,14 +20,18 @@ from pyparsing import ParseException
 import logging
 log = logging.getLogger('nose.plugins')
 
+# This line ensures that frames from this file will not be shown in tracebacks
 __unittest = 1
 
+# Step definitions and hooks collect here
 step_registry = {
     'before': set(),
     'after': set(),
     'after_step': set(),
     'step': {}
 }
+
+# --- Functions available to step definitions files ---
 
 def step_decorator(spec):
     """ Decorator to wrap step definitions in. Registers definition. """
@@ -38,6 +42,7 @@ def step_decorator(spec):
     return wrapper
 
 def hook_decorator(kind):
+    """ Decorator to wrap hook definitions in. Registers hook. """
     def wrapper(func):
         step_registry[kind].add(func)
         return func
@@ -66,6 +71,9 @@ def assert_looks_like(first, second, msg=None):
     second = re.sub("\s+", " ", second.strip())
     if first != second:
         raise AssertionError(msg or "%r does not look like %r" % (first, second))
+
+
+# --- Internals ---
 
 class FreshenException(Exception):
     pass
