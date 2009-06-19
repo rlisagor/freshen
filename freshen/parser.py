@@ -146,13 +146,15 @@ def grammar(fname, convert=True, base_line=0):
     def process_m_string(s):
         return s[0].strip()
     
-    following_text = empty + restOfLine
+
+    empty_not_n    = empty.copy().setWhitespaceChars(" \t")
+    
+    following_text = empty_not_n + restOfLine
     section_header = lambda name: Suppress(name + ":") + following_text
     
     section_name   = Literal("Scenario") | Literal("Scenario Outline")
     descr_block    = Group(SkipTo(section_name).setParseAction(process_descr))
     
-    empty_not_n    = empty.copy().setWhitespaceChars(" \t")
     table_row      = Group(Suppress("|") +
                            delimitedList(Suppress(empty_not_n) +
                                          CharsNotIn("| \t\n") +

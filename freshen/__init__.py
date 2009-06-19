@@ -162,21 +162,30 @@ class FreshenNosePlugin(Plugin):
     def wantFile(self, filename):
         return filename.endswith(".feature")
     
-    def loadTestsFromFile(self, filename):
+    def loadTestsFromFile(self, filename, indexes=[]):
         feat, before, after = load_feature(filename)
         
-        for sc in feat.iter_scenarios():
-            yield FreshenTestCase(feat, sc, before, after)
+        for i, sc in enumerate(feat.iter_scenarios()):
+            if not indexes or (i + 1) in indexes:
+                yield FreshenTestCase(feat, sc, before, after)
     
     def loadTestsFromName(self, name, _=None):
-        addr = TestAddress(name)
-        if addr.filename.endswith(".feature") and os.path.isfile(addr.filename):
-            result = self.loadTestsFromFile(addr.filename)
-            if addr.call:
-                yield [t for t in result][int(addr.call) - 1]
-            else:
-                for t in result:
-                    yield t
+        log.debug("Loading from name %r" % name)
+        indexes = []
+        if ":" not in name:
+            # let nose take care of it
+            return
+        
+        parts = name.split(":")
+        name = parts.pop(0)
+        indexes = set(int(p) for p in parts)
+        
+        if not os.path.exists(name):
+            return
+        
+        if os.path.isfile(name) and name.endswith(".feature"):
+            for tc in self.loadTestsFromFile(name, indexes):
+                yield tc
     
     def describeTest(self, test):
         if isinstance(test.test, FreshenTestCase):
