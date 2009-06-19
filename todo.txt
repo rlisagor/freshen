@@ -5,6 +5,7 @@ Todo
 - Improve discovery of features and step definition modules
 - Scenario context to save variables into, cleared on every scenario
 - Ability to check on scenario status from hooks
+- Diff for large string comparisons
 - Backgrounds
 - Expose features and scenario outlines as test suites (?)
 - Documentation

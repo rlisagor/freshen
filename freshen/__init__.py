@@ -114,7 +114,7 @@ def find_and_run_match(step):
             return result[0](step.arg, *result[1].groups())
         else:
             return result[0](*result[1].groups())
-    except UndefinedStep:
+    except (UndefinedStep, ExceptionWrapper):
         raise
     except Exception, e:
         raise ExceptionWrapper(sys.exc_info(), step)

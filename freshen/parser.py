@@ -138,7 +138,8 @@ def grammar(fname, convert=True, base_line=0):
     
     m_string       = (Suppress(lineEnd + Literal('"""') + lineEnd).setWhitespaceChars(" \t") +
                       SkipTo((lineEnd +
-                              Literal('"""')).setWhitespaceChars(" \t")).setWhitespaceChars(""))
+                              Literal('"""')).setWhitespaceChars(" \t")).setWhitespaceChars("") +
+                      Suppress('"""'))
     m_string.setParseAction(process_m_string)
     
     step_name      = Keyword("Given") | Keyword("When") | Keyword("Then") | Keyword("And")
