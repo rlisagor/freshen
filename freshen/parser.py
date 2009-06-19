@@ -5,6 +5,15 @@ import textwrap
 import logging
 log = logging.getLogger('nose.plugins')
 
+
+def tags_match(against, tags):
+    """
+    Compare own `tags` against the given set. Tags in `against` may
+    be prefixed with a ~ to negate.
+    """
+    return any(tag.startswith("~") ^ (tag.lstrip("~") in tags) for tag in against)
+
+
 class Feature(object):
     
     def __init__(self, tags, name, description, scenarios):
@@ -20,6 +29,9 @@ class Feature(object):
         for sco in self.scenarios:
             for sc in sco.iterate():
                 yield sc
+    
+    def tags_match(self, against):
+        return tags_match(against, self.tags)
 
 
 class Scenario(object):
@@ -35,15 +47,16 @@ class Scenario(object):
     def iterate(self):
         yield self
 
+    def tags_match(self, against):
+        return tags_match(against, self.tags)
 
-class ScenarioOutline(object):
+
+class ScenarioOutline(Scenario):
     
     def __init__(self, tags, name, steps, examples):
-        self.tags = tags
-        self.name = name
-        self.steps = steps
         self.examples = examples
-
+        super(ScenarioOutline, self).__init__(tags, name, steps)
+    
     def __repr__(self):
         return '<ScenarioOutline "%s">' % self.name
     

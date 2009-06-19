@@ -11,14 +11,14 @@ orig_dir = None
 cwd = None
 
 @Before
-def before():
+def before(scenario):
     global orig_dir, cwd
     orig_dir = os.getcwd()
     os.chdir("examples/self_test")
     cwd = os.getcwd()
 
 @After
-def after():
+def after(scenario):
     global orig_dir, cwd
     os.chdir(orig_dir)
     cwd = os.getcwd()

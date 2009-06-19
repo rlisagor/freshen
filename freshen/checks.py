@@ -23,7 +23,7 @@ def assert_equal(first, second, msg=None):
         diff = _difflib.unified_diff(first.split("\n"), second.split("\n"),
                                      "expected", "actual", lineterm="")
         diff = "    " + "\n    ".join(diff)
-        raise AssertionError(msg or "strings not equal:\n" + diff)
+        raise AssertionError(msg or "Strings not equal\n" + diff)
 
 assert_equals = assert_equal
 

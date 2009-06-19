@@ -43,10 +43,23 @@ def step_decorator(spec):
 
 def hook_decorator(kind):
     """ Decorator to wrap hook definitions in. Registers hook. """
-    def wrapper(func):
-        step_registry[kind].add(func)
-        return func
-    return wrapper
+    def decorator_wrapper(*args):
+        
+        if len(args) == 1 and callable(args[0]):
+            # No tags were passed to this decorator
+            step_registry[kind].add(args[0])
+            return args[0]
+        else:
+            # We got some tags, so we need to produce the real decorator
+            def d(func):
+                def func_wrapper(scenario):
+                    if scenario.tags_match(args):
+                        func(scenario)
+
+                step_registry[kind].add(func_wrapper)
+                return func_wrapper
+            return d
+    return decorator_wrapper
 
 Given = When = Then = And = step_decorator
 Before = hook_decorator('before')
@@ -123,17 +136,17 @@ class FreshenTestCase(unittest.TestCase):
     
     def setUp(self):
         for func in step_registry['before']:
-            func()
+            func(self.scenario)
     
     def runTest(self):
         for step in self.scenario.steps:
             res = find_and_run_match(step)
             for func in step_registry['after_step']:
-                func()
+                func(self.scenario)
     
     def tearDown(self):
         for func in step_registry['after']:
-            func()
+            func(self.scenario)
 
 def load_feature(fname):
     """ Load and parse a feature file. """
