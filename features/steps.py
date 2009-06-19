@@ -25,5 +25,5 @@ def check_outcome(exp_status):
 @Then("^it should (pass|fail) with$")
 def check_outcome(exp_output, exp_status):
     run_steps("Then it should %s" % exp_status)
-    assert_looks_like(exp_output, output)
+    assert_equals(exp_output, output)
     

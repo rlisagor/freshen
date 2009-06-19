@@ -1,7 +1,7 @@
 from pyparsing import *
 import re
 import copy
-
+import textwrap
 import logging
 log = logging.getLogger('nose.plugins')
 
@@ -146,14 +146,17 @@ def grammar(fname, convert=True, base_line=0):
     def process_string(s):
         return s[0].strip()
     
-
+    def process_m_string(s):
+        return textwrap.dedent(s[0])
+    
     empty_not_n    = empty.copy().setWhitespaceChars(" \t")
+    tags           = Suppress(OneOrMore("@" + Word(alphanums + "_")))
     
     following_text = empty_not_n + restOfLine
     section_header = lambda name: Suppress(name + ":") + following_text
     
     section_name   = Literal("Scenario") | Literal("Scenario Outline")
-    descr_block    = Group(SkipTo(section_name).setParseAction(process_descr))
+    descr_block    = Group(SkipTo(section_name | tags).setParseAction(process_descr))
     
     table_row      = Group(Suppress("|") +
                            delimitedList(Suppress(empty_not_n) +
@@ -162,7 +165,8 @@ def grammar(fname, convert=True, base_line=0):
                            Suppress("|"))
     table          = table_row + Group(OneOrMore(table_row))
     
-    m_string       = QuotedString('"""', multiline=True, unquoteResults=True).setParseAction(process_string)
+    m_string       = (Suppress(lineEnd + Literal('"""') + lineEnd).setWhitespaceChars(" \t") +
+                      SkipTo((lineEnd + Literal('"""')).setWhitespaceChars(" \t")).setWhitespaceChars("")).setParseAction(process_m_string)
     
     step_name      = Keyword("Given") | Keyword("When") | Keyword("Then") | Keyword("And")
     step           = step_name + following_text + Optional(table | m_string)
@@ -170,15 +174,14 @@ def grammar(fname, convert=True, base_line=0):
 
     example        = section_header("Examples") + table
     
-    scenario       = section_header("Scenario") + steps
-    scenario_outline = section_header("Scenario Outline") + steps + Group(OneOrMore(example))
+    scenario       = Optional(tags) + section_header("Scenario") + steps
+    scenario_outline = Optional(tags) + section_header("Scenario Outline") + steps + Group(OneOrMore(example))
     
-    feature        = section_header("Feature") + descr_block + Group(OneOrMore(scenario | scenario_outline))
+    feature        = Optional(tags) + section_header("Feature") + descr_block + Group(OneOrMore(scenario | scenario_outline))
     
     # Ignore tags for now as they are not supported
-    tags           = OneOrMore("@" + Word(alphanums + "_"))
-    feature.ignore(tags).ignore(pythonStyleComment)
-    steps.ignore(tags).ignore(pythonStyleComment)
+    feature.ignore(pythonStyleComment)
+    steps.ignore(pythonStyleComment)
     
     if convert:
         table.setParseAction(create_object(Table))
