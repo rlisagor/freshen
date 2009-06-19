@@ -7,9 +7,10 @@ import commands
 status = None
 output = None
 
+@Before
 def before():
     os.chdir("examples/self_test")
-    
+
 @When("^I run nose (.+)$")
 def run_nose(args):
     global status, output

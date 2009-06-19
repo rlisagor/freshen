@@ -1,4 +1,4 @@
-__all__ = ['Given', 'When', 'Then', 'And', 'run_steps', 'assert_looks_like']
+__all__ = ['Given', 'When', 'Then', 'And', 'Before', 'After', 'AfterStep', 'run_steps', 'assert_looks_like']
 
 import imp
 import inspect
@@ -22,20 +22,31 @@ log = logging.getLogger('nose.plugins')
 
 __unittest = 1
 
-spec_registry = {}
+step_registry = {
+    'before': set(),
+    'after': set(),
+    'after_step': set(),
+    'step': {}
+}
 
 def step_decorator(spec):
     """ Decorator to wrap step definitions in. Registers definition. """
     def wrapper(func):
         r = re.compile(spec)
-        spec_registry[r] = func
+        step_registry['step'][r] = func
         return func
     return wrapper
 
-Given = step_decorator
-When = step_decorator
-Then = step_decorator
-And = step_decorator
+def hook_decorator(kind):
+    def wrapper(func):
+        step_registry[kind].add(func)
+        return func
+    return wrapper
+
+Given = When = Then = And = step_decorator
+Before = hook_decorator('before')
+After = hook_decorator('after')
+AfterStep = hook_decorator('after_step')
 
 def run_steps(spec):
     """ Called from within step definitions to run other steps. """
@@ -80,7 +91,7 @@ class UndefinedStep(Exception):
 def find_and_run_match(step):
     """ Look up the step in the registry, then run it """
     result = None
-    for r, f in spec_registry.iteritems():
+    for r, f in step_registry['step'].iteritems():
         matches = r.match(step.match)
         if matches:
             if result:
@@ -103,26 +114,26 @@ def find_and_run_match(step):
 
 class FreshenTestCase(unittest.TestCase):
 
-    def __init__(self, feature, scenario, before, after):
+    def __init__(self, feature, scenario):
         self.feature = feature
         self.scenario = scenario
-        self.before = before
-        self.after = after
         
         self.description = feature.name + ": " + scenario.name
         super(FreshenTestCase, self).__init__()
     
     def setUp(self):
-        if self.before:
-            self.before()
+        for func in step_registry['before']:
+            func()
     
     def runTest(self):
         for step in self.scenario.steps:
             res = find_and_run_match(step)
+            for func in step_registry['after_step']:
+                func()
     
     def tearDown(self):
-        if self.after:
-            self.after()
+        for func in step_registry['after']:
+            func()
 
 def load_feature(fname):
     """ Load and parse a feature file. """
@@ -130,18 +141,13 @@ def load_feature(fname):
     fname = os.path.abspath(fname)
     path = os.path.dirname(fname)
     
-    before = after = None
     try:
         info = imp.find_module("steps", [path])
         mod = imp.load_module("steps", *info)
-
-        before = getattr(mod, 'before', None)
-        after = getattr(mod, 'after', None)
     except ImportError:
         pass
     
-    return parser.parse_file(fname), before, after
-
+    return parser.parse_file(fname)
 
 class FreshenErrorPlugin(ErrorClassPlugin):
 
@@ -167,7 +173,7 @@ class FreshenNosePlugin(Plugin):
     
     def loadTestsFromFile(self, filename, indexes=[]):
         try:
-            feat, before, after = load_feature(filename)
+            feat = load_feature(filename)
         except ParseException, e:
             ec, ev, tb = sys.exc_info()
             yield Failure(ParseException, ParseException(e.pstr, e.loc, e.msg + " in %s" % filename), tb)
@@ -175,7 +181,7 @@ class FreshenNosePlugin(Plugin):
         
         for i, sc in enumerate(feat.iter_scenarios()):
             if not indexes or (i + 1) in indexes:
-                yield FreshenTestCase(feat, sc, before, after)
+                yield FreshenTestCase(feat, sc)
     
     def loadTestsFromName(self, name, _=None):
         log.debug("Loading from name %r" % name)
