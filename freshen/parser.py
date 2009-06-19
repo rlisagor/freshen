@@ -143,7 +143,7 @@ def grammar(fname, convert=True, base_line=0):
     def process_descr(s):
         return [p.strip() for p in s[0].strip().split("\n")]
         
-    def process_m_string(s):
+    def process_string(s):
         return s[0].strip()
     
 
@@ -157,12 +157,12 @@ def grammar(fname, convert=True, base_line=0):
     
     table_row      = Group(Suppress("|") +
                            delimitedList(Suppress(empty_not_n) +
-                                         CharsNotIn("| \t\n") +
+                                         CharsNotIn("|\n").setParseAction(process_string) +
                                          Suppress(empty_not_n), delim="|") +
                            Suppress("|"))
     table          = table_row + Group(OneOrMore(table_row))
     
-    m_string       = QuotedString('"""', multiline=True, unquoteResults=True).setParseAction(process_m_string)
+    m_string       = QuotedString('"""', multiline=True, unquoteResults=True).setParseAction(process_string)
     
     step_name      = Keyword("Given") | Keyword("When") | Keyword("Then") | Keyword("And")
     step           = step_name + following_text + Optional(table | m_string)
