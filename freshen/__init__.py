@@ -8,11 +8,14 @@ import parser
 import traceback
 import unittest
 import sys
+import types
 from nose.plugins import Plugin
 from nose.plugins.skip import SkipTest
 from nose.plugins.errorclass import ErrorClass, ErrorClassPlugin
 from nose.selector import TestAddress
+from nose.failure import Failure
 from freshen import parser
+from pyparsing import ParseException
 
 import logging
 log = logging.getLogger('nose.plugins')
@@ -163,7 +166,12 @@ class FreshenNosePlugin(Plugin):
         return filename.endswith(".feature")
     
     def loadTestsFromFile(self, filename, indexes=[]):
-        feat, before, after = load_feature(filename)
+        try:
+            feat, before, after = load_feature(filename)
+        except ParseException, e:
+            ec, ev, tb = sys.exc_info()
+            yield Failure(ParseException, ParseException(e.pstr, e.loc, e.msg + " in %s" % filename), tb)
+            return
         
         for i, sc in enumerate(feat.iter_scenarios()):
             if not indexes or (i + 1) in indexes:

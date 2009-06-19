@@ -2,7 +2,6 @@ Todo
 ====
 
 - Improve discovery of features and step definition modules
-- Parse exceptions should tell you which file they're in
 - Hooks
 - Tags
 - Backgrounds
