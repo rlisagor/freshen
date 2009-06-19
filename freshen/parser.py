@@ -7,7 +7,8 @@ log = logging.getLogger('nose.plugins')
 
 class Feature(object):
     
-    def __init__(self, name, description, scenarios):
+    def __init__(self, tags, name, description, scenarios):
+        self.tags = tags
         self.name = name
         self.description = description
         self.scenarios = scenarios
@@ -23,7 +24,8 @@ class Feature(object):
 
 class Scenario(object):
     
-    def __init__(self, name, steps):
+    def __init__(self, tags, name, steps):
+        self.tags = tags
         self.name = name
         self.steps = steps
     
@@ -36,7 +38,8 @@ class Scenario(object):
 
 class ScenarioOutline(object):
     
-    def __init__(self, name, steps, examples):
+    def __init__(self, tags, name, steps, examples):
+        self.tags = tags
         self.name = name
         self.steps = steps
         self.examples = examples
@@ -50,7 +53,7 @@ class ScenarioOutline(object):
                 new_steps = []
                 for step in self.steps:
                     new_steps.append(step.set_values(values))
-                yield Scenario(self.name, new_steps)
+                yield Scenario(self.tags, self.name, new_steps)
 
 
 class Step(object):
@@ -118,7 +121,7 @@ def grammar(fname, convert=True, base_line=0):
         return textwrap.dedent(s[0])
     
     empty_not_n    = empty.copy().setWhitespaceChars(" \t")
-    tags           = Suppress(OneOrMore("@" + Word(alphanums + "_")))
+    tags           = OneOrMore(Word("@", alphanums + "_"))
     
     following_text = empty_not_n + restOfLine
     section_header = lambda name: Suppress(name + ":") + following_text
@@ -144,10 +147,10 @@ def grammar(fname, convert=True, base_line=0):
 
     example        = section_header("Examples") + table
     
-    scenario       = Optional(tags) + section_header("Scenario") + steps
-    scenario_outline = Optional(tags) + section_header("Scenario Outline") + steps + Group(OneOrMore(example))
+    scenario       = Group(Optional(tags)) + section_header("Scenario") + steps
+    scenario_outline = Group(Optional(tags)) + section_header("Scenario Outline") + steps + Group(OneOrMore(example))
     
-    feature        = (Optional(tags) +
+    feature        = (Group(Optional(tags)) +
                       section_header("Feature") +
                       descr_block +
                       Group(OneOrMore(scenario | scenario_outline)))
