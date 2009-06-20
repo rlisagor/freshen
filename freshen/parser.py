@@ -6,14 +6,6 @@ import logging
 log = logging.getLogger('nose.plugins')
 
 
-def tags_match(mytags, desired):
-    """
-    Compare own `tags` against the given set. Tags in `against` may
-    be prefixed with a ~ to negate.
-    """
-    return (not desired) or any(tag.startswith("~") ^ (tag.lstrip("~") in mytags) for tag in desired)
-
-
 class Feature(object):
     
     def __init__(self, tags, name, description, scenarios):
@@ -29,9 +21,6 @@ class Feature(object):
         for sco in self.scenarios:
             for sc in sco.iterate():
                 yield sc
-    
-    def tags_match(self, desired):
-        return tags_match(self.tags, desired)
 
 
 class Scenario(object):
@@ -46,9 +35,6 @@ class Scenario(object):
 
     def iterate(self):
         yield self
-
-    def tags_match(self, desired):
-        return tags_match(self.tags, desired)
 
 
 class ScenarioOutline(Scenario):
@@ -133,8 +119,11 @@ def grammar(fname, convert=True, base_line=0):
     def process_m_string(s):
         return textwrap.dedent(s[0])
     
+    def process_tag(s):
+        return s[0].strip("@")
+    
     empty_not_n    = empty.copy().setWhitespaceChars(" \t")
-    tags           = OneOrMore(Word("@", alphanums + "_"))
+    tags           = OneOrMore(Word("@", alphanums + "_").setParseAction(process_tag))
     
     following_text = empty_not_n + restOfLine
     section_header = lambda name: Suppress(name + ":") + following_text

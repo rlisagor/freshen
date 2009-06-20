@@ -95,6 +95,14 @@ def format_step(step):
                              p,
                              step.src_line)
 
+
+def tags_match(mytags, include, exclude):
+    if set(mytags) & set(exclude):
+        return False
+    
+    return not include or (set(mytags) & set(include))
+
+
 class UndefinedStep(Exception):
     
     def __init__(self, step):
@@ -191,7 +199,9 @@ class FreshenNosePlugin(Plugin):
 
     def configure(self, options, config):
         super(FreshenNosePlugin, self).configure(options, config)
-        self.tags = options.tags.split(",") if options.tags else []
+        all_tags = options.tags.split(",") if options.tags else []
+        self.include_tags = [t.lstrip("@") for t in all_tags if not t.startswith("~")]
+        self.exclude_tags = [t.lstrip("~@") for t in all_tags if t.startswith("~")]
     
     def wantDirectory(self, dirname):
         return True
@@ -207,16 +217,17 @@ class FreshenNosePlugin(Plugin):
             yield Failure(ParseException, ParseException(e.pstr, e.loc, e.msg + " in %s" % filename), tb)
             return
         
-        if not feat.tags_match(self.tags):
-            yield False
-            return
-        
+        cnt = 0
         for i, sc in enumerate(feat.iter_scenarios()):
-            if (not indexes or (i + 1) in indexes) and sc.tags_match(self.tags):
-                yield FreshenTestCase(feat, sc)
+            if (not indexes or (i + 1) in indexes):
+                if tags_match(sc.tags + feat.tags, self.include_tags, self.exclude_tags):
+                    yield FreshenTestCase(feat, sc)
+                    cnt += 1
+        
+        if not cnt:
+            yield False
     
     def loadTestsFromName(self, name, _=None):
-        log.debug("Loading from name %r" % name)
         indexes = []
         if ":" not in name:
             # let nose take care of it
