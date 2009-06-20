@@ -6,12 +6,12 @@ import logging
 log = logging.getLogger('nose.plugins')
 
 
-def tags_match(against, tags):
+def tags_match(mytags, desired):
     """
     Compare own `tags` against the given set. Tags in `against` may
     be prefixed with a ~ to negate.
     """
-    return any(tag.startswith("~") ^ (tag.lstrip("~") in tags) for tag in against)
+    return (not desired) or any(tag.startswith("~") ^ (tag.lstrip("~") in mytags) for tag in desired)
 
 
 class Feature(object):
@@ -30,8 +30,8 @@ class Feature(object):
             for sc in sco.iterate():
                 yield sc
     
-    def tags_match(self, against):
-        return tags_match(against, self.tags)
+    def tags_match(self, desired):
+        return tags_match(self.tags, desired)
 
 
 class Scenario(object):
@@ -47,8 +47,8 @@ class Scenario(object):
     def iterate(self):
         yield self
 
-    def tags_match(self, against):
-        return tags_match(against, self.tags)
+    def tags_match(self, desired):
+        return tags_match(self.tags, desired)
 
 
 class ScenarioOutline(Scenario):

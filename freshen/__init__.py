@@ -178,6 +178,21 @@ class FreshenNosePlugin(Plugin):
     
     name = "freshen"
     
+    def options(self, parser, env):
+        super(FreshenNosePlugin, self).options(parser, env)
+        
+        parser.add_option('--tags', action='store',
+                          dest='tags',
+                          default=env.get('NOSE_FRESHEN_TAGS'),
+                          help="Run only those scenarios and features which "
+                               "match the given tags. Should be a comma-separated "
+                               "list. Each tag can be prefixed with a ~ to negate "
+                               "[NOSE_FRESHEN_TAGS]")
+
+    def configure(self, options, config):
+        super(FreshenNosePlugin, self).configure(options, config)
+        self.tags = options.tags.split(",") if options.tags else []
+    
     def wantDirectory(self, dirname):
         return True
     
@@ -192,8 +207,12 @@ class FreshenNosePlugin(Plugin):
             yield Failure(ParseException, ParseException(e.pstr, e.loc, e.msg + " in %s" % filename), tb)
             return
         
+        if not feat.tags_match(self.tags):
+            yield False
+            return
+        
         for i, sc in enumerate(feat.iter_scenarios()):
-            if not indexes or (i + 1) in indexes:
+            if (not indexes or (i + 1) in indexes) and sc.tags_match(self.tags):
                 yield FreshenTestCase(feat, sc)
     
     def loadTestsFromName(self, name, _=None):

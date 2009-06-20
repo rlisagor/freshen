@@ -13,7 +13,7 @@ Feature: Freshen command line
         OK (UNDEFINED=1)
         """
 
-  Scenario: Specify the line-based index of a scenario
+  Scenario: Specify the 1-based index of a scenario
     When I run nose features/sample.feature:2
     Then it should pass with
         """

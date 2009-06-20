@@ -35,7 +35,7 @@ def check_outcome(exp_status):
     if exp_status == "fail":
         assert_not_equals(status, 0)
     elif status != 0:
-        raise Exception("Failed with exit status %d\nOUTPUT:\n%s" % (result, output))
+        raise Exception("Failed with exit status %d\nOUTPUT:\n%s" % (status, output))
 
 @Then("^it should (pass|fail) with$")
 def check_outcome(exp_output, exp_status):
