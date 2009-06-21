@@ -243,10 +243,12 @@ class FreshenNosePlugin(Plugin):
         self.exclude_tags = [t.lstrip("~@") for t in all_tags if t.startswith("~")]
     
     def wantDirectory(self, dirname):
-        return not os.path.exists(os.path.join(dirname, ".freshenignore"))
+        if not os.path.exists(os.path.join(dirname, ".freshenignore")):
+            return True
+        return None
     
     def wantFile(self, filename):
-        return filename.endswith(".feature")
+        return filename.endswith(".feature") or None
     
     def loadTestsFromFile(self, filename, indexes=[]):
         log.debug("Loading from file %s" % filename)
