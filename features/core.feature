@@ -1,4 +1,4 @@
-Feature: Freshen command line
+Feature: Freshen core
   In order to write better software
   Developers should be able to execute requirements as tests
 
@@ -77,66 +77,15 @@ Feature: Freshen command line
         FAILED (UNDEFINED=1, errors=1)
         """
 
-  Scenario: Run with a tag that exists on 2 scenarios
-    When I run nose -v --tags three features
+  Scenario: Find feature files in nested directories
+    When I run nose -v --tags nested features
     Then it should pass with
         """
-        Sample: Missing ... UNDEFINED: "missing" # features/sample.feature:7
-        Sample: Passing ... ok
-
-        ----------------------------------------------------------------------
-        Ran 2 tests in {time}
-
-        OK (UNDEFINED=1)
-        """
-
-  Scenario: Run with a tag that exists on 1 feature
-    When I run nose -v --tags @one
-    Then it should fail with
-        """
-        Sample: Missing ... UNDEFINED: "missing" # features/sample.feature:7
-        Sample: Passing ... ok
-        Sample: Failing ... ERROR
-         
-        ======================================================================
-        ERROR: Sample: Failing
-        ----------------------------------------------------------------------
-        Traceback (most recent call last):
-          File "/home/roman/dev/freshen/examples/self_test/features/steps.py", line 14, in failing
-            flunker()
-          File "/home/roman/dev/freshen/examples/self_test/features/steps.py", line 5, in flunker
-            raise Exception("FAIL")
-        Exception: FAIL
-        
-        >> in "failing" # features/sample.feature:18
+        A feature in a subdirectory: Passing ... ok
         
         ----------------------------------------------------------------------
-        Ran 3 tests in {time}
-        
-        FAILED (UNDEFINED=1, errors=1)
-        """
+        Ran 1 test in {time}
 
-  Scenario: Run with a negative tag
-    When I run nose -v --tags ~three features/sample.feature
-    Then it should fail with
-    """
-    Sample: Failing ... ERROR
-     
-    ======================================================================
-    ERROR: Sample: Failing
-    ----------------------------------------------------------------------
-    Traceback (most recent call last):
-      File "/home/roman/dev/freshen/examples/self_test/features/steps.py", line 14, in failing
-        flunker()
-      File "/home/roman/dev/freshen/examples/self_test/features/steps.py", line 5, in flunker
-        raise Exception("FAIL")
-    Exception: FAIL
-    
-    >> in "failing" # features/sample.feature:18
-    
-    ----------------------------------------------------------------------
-    Ran 1 test in {time}
-    
-    FAILED (errors=1)
-    """
+        OK
+        """
 

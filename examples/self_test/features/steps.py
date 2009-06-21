@@ -95,16 +95,3 @@ def unused():
 def another_unused():
     pass
 
-"""
-after_file = File.expand_path(File.dirname(__FILE__) + '/../../tmp/after.txt')
-
-Before do
-  FileUtils.rm(after_file) if File.exist?(after_file)
-end
-
-After('@after_file') do
-  FileUtils.mkdir_p(File.dirname(after_file))
-  FileUtils.touch(after_file)
-end
-"""
-

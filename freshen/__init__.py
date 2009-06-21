@@ -156,19 +156,25 @@ class FreshenTestCase(unittest.TestCase):
         for func in step_registry['after']:
             func(self.scenario)
 
+definition_paths = []
+
 def load_feature(fname):
     """ Load and parse a feature file. """
 
     fname = os.path.abspath(fname)
     path = os.path.dirname(fname)
     
-    try:
-        info = imp.find_module("steps", [path])
-        mod = imp.load_module("steps", *info)
-    except ImportError:
-        pass
+    feat = parser.parse_file(fname)
+
+    if path not in definition_paths:
+        try:
+            info = imp.find_module("steps", [path])
+            mod = imp.load_module("steps", *info)
+            definition_paths.append(path)
+        except ImportError:
+            pass
     
-    return parser.parse_file(fname)
+    return feat
 
 class FreshenErrorPlugin(ErrorClassPlugin):
 

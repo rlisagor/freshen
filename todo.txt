@@ -1,12 +1,11 @@
 Todo
 ====
 
-- Tags
-- Improve discovery of features and step definition modules
 - Scenario context to save variables into, cleared on every scenario
 - Ability to check on scenario status from hooks
 - Backgrounds
 - Expose features and scenario outlines as test suites (?)
+- Strict mode
 - Documentation
 - License
 
