@@ -3,8 +3,8 @@ from freshen import *
 
 import calculator
 
-
-def before():
+@Before
+def before(sc):
     global calc
     global result
     calc = calculator.Calculator()
