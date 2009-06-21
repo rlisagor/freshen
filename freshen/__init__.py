@@ -243,7 +243,7 @@ class FreshenNosePlugin(Plugin):
         self.exclude_tags = [t.lstrip("~@") for t in all_tags if t.startswith("~")]
     
     def wantDirectory(self, dirname):
-        return True
+        return not os.path.exists(os.path.join(dirname, ".freshenignore"))
     
     def wantFile(self, filename):
         return filename.endswith(".feature")
