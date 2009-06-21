@@ -29,59 +29,43 @@ def call_undef():
 def call_step(step):
     run_steps("Given step")
 
-cukes = None
-
 @Given("^'(.+)' cukes$")
 def do_cukes(c):
-    global cukes
-    if cukes:
-        raise Exception("We already have %s cukes!" % cukes)
-    cukes = c
+    if glc.cukes:
+        raise Exception("We already have %s cukes!" % glc.cukes)
+    glc.cukes = c
 
 @Then("^I should have '(.+)' cukes$")
 def should_have_cukes(c):
-    global cukes
-    assert_equals(c, cukes)
-
-scenario_runs = 0
+    assert_equals(c, glc.cukes)
 
 @Given("^'(.+)' global cukes$")
 def global_cukes(c):
-    global cukes, scenario_runs
-    if scenario_runs >= 1:
+    if scc.scenario_runs >= 1:
         flunker()
     
-    cukes = c
-    scenario_runs += 1
+    glc.cukes = c
+    scc.scenario_runs += 1
 
 @Then("^I should have '(.+)' global cukes$")
 def check_global_cukes(c):
-    global cukes
-    assert_equals(c, cukes)
-
-t = None
+    assert_equals(c, glc.cukes)
 
 @Given("^table$")
 def with_table(table):
-    global t
-    t = table
-
-multiline = None
+    scc.t = table
 
 @Given("^multiline string$")
 def with_m_string(string):
-    global multiline
-    multiline = string
+    scc.multiline = string
 
 @Then("^the table should be$")
 def check_table(table):
-    global t
-    assert_equals(t, table)
+    assert_equals(scc.t, table)
 
 @Then("^the multiline string should be$")
 def check_m_string(string):
-    global multiline
-    assert_equals(multiline)
+    assert_equals(scc.multiline)
 
 @Given("^failing expectation$")
 def failing_expectations():

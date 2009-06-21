@@ -1,4 +1,4 @@
-__all__ = ['Given', 'When', 'Then', 'And', 'Before', 'After', 'AfterStep', 'run_steps']
+__all__ = ['Given', 'When', 'Then', 'And', 'Before', 'After', 'AfterStep', 'run_steps', 'glc', 'scc']
 
 import imp
 import inspect
@@ -32,6 +32,38 @@ step_registry = {
 }
 
 # --- Functions available to step definitions files ---
+
+# Contexts
+class Context(object):
+    """
+    A javascript/lua like dictionary whose items can be accessed as attributes
+    """
+    
+    def __init__(self):
+        self.__dict__['d'] = {}
+    
+    def __getattr__(self, name):
+        if name in self.d:
+            return self.d[name]
+        else:
+            return None
+    __getitem__ = __getattr__
+    
+    def __setattr__(self, name, value):
+        self.d[name] = value
+    __setitem__ = __setattr__
+    
+    def __delattr__(self, name):
+        if name in self.d:
+            del self.d[name]
+    __delitem__ = __delattr__
+
+    def clear(self):
+        self.__dict__['d'] = {}
+
+
+glc = Context() # Global context - never cleared
+scc = Context() # Scenario context - cleared for every scenario
 
 def step_decorator(spec):
     """ Decorator to wrap step definitions in. Registers definition. """
@@ -143,6 +175,7 @@ class FreshenTestCase(unittest.TestCase):
         super(FreshenTestCase, self).__init__()
     
     def setUp(self):
+        scc.clear()
         for func in step_registry['before']:
             func(self.scenario)
     
@@ -216,6 +249,7 @@ class FreshenNosePlugin(Plugin):
         return filename.endswith(".feature")
     
     def loadTestsFromFile(self, filename, indexes=[]):
+        log.debug("Loading from file %s" % filename)
         try:
             feat = load_feature(filename)
         except ParseException, e:
@@ -234,6 +268,8 @@ class FreshenNosePlugin(Plugin):
             yield False
     
     def loadTestsFromName(self, name, _=None):
+        log.debug("Loading from name %s" % name)
+        
         indexes = []
         if ":" not in name:
             # let nose take care of it
