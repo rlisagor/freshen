@@ -63,6 +63,7 @@ class Context(object):
 
 
 glc = Context() # Global context - never cleared
+ftc = Context() # Feature context - cleared for every feature
 scc = Context() # Scenario context - cleared for every scenario
 
 def step_decorator(spec):
@@ -164,17 +165,24 @@ def find_and_run_match(step):
     except Exception, e:
         raise ExceptionWrapper(sys.exc_info(), step)
 
+class FeatureSuite(object):
+
+    def setUp(self):
+        #log.debug("Clearing feature context")
+        ftc.clear()
 
 class FreshenTestCase(unittest.TestCase):
 
-    def __init__(self, feature, scenario):
+    def __init__(self, feature, scenario, feature_suite):
         self.feature = feature
         self.scenario = scenario
+        self.context = feature_suite
         
         self.description = feature.name + ": " + scenario.name
         super(FreshenTestCase, self).__init__()
     
     def setUp(self):
+        #log.debug("Clearing scenario context")
         scc.clear()
         for func in step_registry['before']:
             func(self.scenario)
@@ -260,10 +268,11 @@ class FreshenNosePlugin(Plugin):
             return
         
         cnt = 0
+        ctx = FeatureSuite()
         for i, sc in enumerate(feat.iter_scenarios()):
             if (not indexes or (i + 1) in indexes):
                 if tags_match(sc.tags + feat.tags, self.include_tags, self.exclude_tags):
-                    yield FreshenTestCase(feat, sc)
+                    yield FreshenTestCase(feat, sc, ctx)
                     cnt += 1
         
         if not cnt:
@@ -293,7 +302,7 @@ class FreshenNosePlugin(Plugin):
             return test.test.description
 
     def formatFailure(self, test, err):
-        if isinstance(test.test, FreshenTestCase):
+        if hasattr(test, 'test') and isinstance(test.test, FreshenTestCase):
             ec, ev, tb = err
             if ec is ExceptionWrapper:
                 orig_ec, orig_ev, orig_tb = ev.e
