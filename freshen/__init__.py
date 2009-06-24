@@ -31,6 +31,19 @@ step_registry = {
     'step': {}
 }
 
+class TagMatcher(object):
+    
+    def __init__(self, tags):
+        self.include_tags = set(t.lstrip("@") for t in tags if not t.startswith("~"))
+        self.exclude_tags = set(t.lstrip("~@") for t in tags if t.startswith("~"))
+
+    def check_match(self, tagset):
+        tagset = set(t.lstrip("@") for t in tagset)
+        if tagset & self.exclude_tags:
+            return False
+        
+        return not self.include_tags or (tagset & self.include_tags)
+
 # --- Functions available to step definitions files ---
 
 # Contexts
@@ -86,7 +99,7 @@ def hook_decorator(kind):
             # We got some tags, so we need to produce the real decorator
             def d(func):
                 def func_wrapper(scenario):
-                    if scenario.tags_match(args):
+                    if TagMatcher(args).check_match(scenario.tags):
                         func(scenario)
 
                 step_registry[kind].add(func_wrapper)
@@ -127,13 +140,6 @@ def format_step(step):
     return '"%s" # %s:%d' % (step.match,
                              p,
                              step.src_line)
-
-
-def tags_match(mytags, include, exclude):
-    if set(mytags) & set(exclude):
-        return False
-    
-    return not include or (set(mytags) & set(include))
 
 
 class UndefinedStep(Exception):
@@ -247,8 +253,7 @@ class FreshenNosePlugin(Plugin):
     def configure(self, options, config):
         super(FreshenNosePlugin, self).configure(options, config)
         all_tags = options.tags.split(",") if options.tags else []
-        self.include_tags = [t.lstrip("@") for t in all_tags if not t.startswith("~")]
-        self.exclude_tags = [t.lstrip("~@") for t in all_tags if t.startswith("~")]
+        self.tagmatcher = TagMatcher(all_tags)
     
     def wantDirectory(self, dirname):
         if not os.path.exists(os.path.join(dirname, ".freshenignore")):
@@ -271,7 +276,7 @@ class FreshenNosePlugin(Plugin):
         ctx = FeatureSuite()
         for i, sc in enumerate(feat.iter_scenarios()):
             if (not indexes or (i + 1) in indexes):
-                if tags_match(sc.tags + feat.tags, self.include_tags, self.exclude_tags):
+                if self.tagmatcher.check_match(sc.tags + feat.tags):
                     yield FreshenTestCase(feat, sc, ctx)
                     cnt += 1
         
