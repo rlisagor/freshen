@@ -4,7 +4,6 @@ Todo
 - Integrate django
 - Ability to check on scenario status from hooks
 - Backgrounds
-- Expose features and scenario outlines as test suites (?)
 - Integrate selenium
 - Strict mode
 - Documentation

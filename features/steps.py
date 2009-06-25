@@ -5,42 +5,34 @@ import os
 import commands
 import re
 
-status = None
-output = None
-orig_dir = None
-cwd = None
 
 @Before
 def before(scenario):
-    global orig_dir, cwd
-    orig_dir = os.getcwd()
+    scc.orig_dir = os.getcwd()
     os.chdir("examples/self_test")
-    cwd = os.getcwd()
+    scc.cwd = os.getcwd()
 
 @After
 def after(scenario):
-    global orig_dir, cwd
-    os.chdir(orig_dir)
-    cwd = os.getcwd()
-    orig_dir = None
+    os.chdir(scc.orig_dir)
+    scc.cwd = os.getcwd()
 
 @When("^I run nose (.+)$")
 def run_nose(args):
-    global status, output
-    status, output = commands.getstatusoutput("nosetests --with-freshen " + args)
-    output = re.sub(r"(Ran \d+ tests? in )([\d.]+)s", r"\1{time}", output)
+    scc.status, scc.output = commands.getstatusoutput("nosetests --with-freshen " + args)
+    scc.output = re.sub(r"(Ran \d+ tests? in )([\d.]+)s", r"\1{time}", scc.output)
 
 @Then("^it should (pass|fail)$")
 def check_outcome(exp_status):
     if exp_status == "fail":
-        assert_not_equals(status, 0)
-    elif status != 0:
-        raise Exception("Failed with exit status %d\nOUTPUT:\n%s" % (status, output))
+        assert_not_equals(scc.status, 0)
+    elif scc.status != 0:
+        raise Exception("Failed with exit status %d\nOUTPUT:\n%s" % (scc.status, scc.output))
 
 @Then("^it should (pass|fail) with$")
 def check_outcome(exp_output, exp_status):
     run_steps("Then it should %s" % exp_status)
     
-    exp_output = exp_output.replace("{cwd}", cwd)
-    assert_equals(exp_output, output)
+    exp_output = exp_output.replace("{cwd}", scc.cwd)
+    assert_equals(exp_output, scc.output)
 
