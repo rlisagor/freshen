@@ -214,12 +214,13 @@ def load_feature(fname):
     feat = parser.parse_file(fname)
 
     if path not in definition_paths:
+        log.debug("Looking for step defs in %s" % path)
         try:
             info = imp.find_module("steps", [path])
             mod = imp.load_module("steps", *info)
             definition_paths.append(path)
-        except ImportError:
-            pass
+        except ImportError, e:
+            log.debug(traceback.format_exc())
     
     return feat
 

@@ -1,5 +1,5 @@
-from nose.tools import *
 from freshen import *
+from freshen.checks import *
 
 import calculator
 

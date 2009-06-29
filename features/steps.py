@@ -5,7 +5,6 @@ import os
 import commands
 import re
 
-
 @Before
 def before(scenario):
     scc.orig_dir = os.getcwd()

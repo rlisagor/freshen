@@ -1,2 +1,3 @@
 *.pyc
 Freshen_plugin.egg-info
+dist
