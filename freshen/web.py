@@ -8,8 +8,8 @@ log = logging.getLogger('nose.plugins')
 def use_selenium(host="localhost", port=4444, browser="*firefox", url="http://localhost", tags=[]):
     # "before all"
     log.debug("Setting up selenium")
-    glc.browser = selenium.selenium("localhost", 4444, "*firefox", "http://localhost")
-
+    glc.browser = selenium.selenium(host, port, browser, url)
+    
     @Before(*tags)
     def start_browser(sc):
         log.debug("Starting selenium")
