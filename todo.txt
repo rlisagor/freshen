@@ -7,4 +7,6 @@ Todo
 - Strict mode
 - Documentation
 - License
+- Refactor code to be proper classes and use less globals
+
 

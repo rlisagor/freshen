@@ -3,7 +3,7 @@ import re
 import copy
 import textwrap
 import logging
-log = logging.getLogger('nose.plugins')
+log = logging.getLogger('freshen')
 
 
 class Feature(object):

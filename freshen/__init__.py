@@ -18,7 +18,7 @@ from freshen import parser
 from pyparsing import ParseException
 
 import logging
-log = logging.getLogger('nose.plugins')
+log = logging.getLogger('freshen')
 
 # This line ensures that frames from this file will not be shown in tracebacks
 __unittest = 1
