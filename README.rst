@@ -169,6 +169,37 @@ executed selectively. A partial example::
         make_tmp_file()
 
 
+Ignoring directories
+--------------------
+
+If a directory contains files with the extension ".feature" but you'd like Freshen to skip over
+it, simply place a file with the name ".freshenignore" in that directory.
+
+
+Using with Django
+-----------------
+
+Django_ is a popular framework for web applications. Freshen can work in conjunction with the
+`django-sane-testing`_ library to initialize the Django environment and databases before running
+tests. This feature is enabled by using the ``--with-django`` option from django-sane-testing. You
+can also use ``--with-djangoliveserver`` or ``--with-cherrypyliveserver`` to start a web server
+before the tests run for use with a UI testing tool such as `Selenium`_.
+
+
+Using with Selenium
+-------------------
+
+Selenium_ is a widely used UI testing framework. You can make use of this framework in Freshen
+tests. To do so, include ``web.use_selenium()`` at the top of your step definition module. There is
+and example in the `source code`_. You can pass the following options::
+
+    web.use_selenium(host="localhost", port=4444, browser="*firefox", url="http://localhost", tags=[])
+
+The ``tags`` option will cause Selenium to only start for scenarios which match the given tags.
+
+When enabled, you can find the Selenium API object in ``glc.browser``.
+
+
 Running
 -------
 
@@ -206,4 +237,7 @@ please feel free to let me know, or simply clone the repo and play around.
 .. _`Nose manual`: http://somethingaboutorange.com/mrl/projects/nose/0.11.1/testing.html
 .. _`Cucumber`: http://cukes.info
 .. _`Source code`: http://github.com/rlisagor/freshen
+.. _`Selenium`: http://seleniumhq.org/
+.. _`Django`: http://www.djangoproject.com/
+.. _`django-sane-testing`: http://devel.almad.net/trac/django-sane-testing/
 
