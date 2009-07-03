@@ -3,7 +3,7 @@ from freshen import selenium
 import atexit
 
 import logging
-log = logging.getLogger('freshen')
+log = logging.getLogger('nose.plugins.freshen')
 
 def use_selenium(host="localhost", port=4444, browser="*firefox", url="http://localhost", tags=[]):
     # "before all"
