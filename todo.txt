@@ -1,11 +1,10 @@
 Todo
 ====
 
-- Integrate django
+- Django test runner
 - Ability to check on scenario status from hooks
 - Backgrounds
 - Strict mode
-- Documentation
 - License
 - Refactor code to be proper classes and use less globals
 
