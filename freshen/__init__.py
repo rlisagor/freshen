@@ -179,6 +179,18 @@ class FeatureSuite(object):
 
 class FreshenTestCase(unittest.TestCase):
 
+    start_live_server = True
+    database_single_transaction = True
+    database_flush = True
+    selenium_start = False
+    no_database_interaction = False
+    make_translations = True
+    required_sane_plugins = ["django", "http"]    
+    django_plugin_started = False
+    http_plugin_started = False
+    
+    test_type = "http"
+
     def __init__(self, feature, scenario, feature_suite):
         self.feature = feature
         self.scenario = scenario
