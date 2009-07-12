@@ -42,9 +42,9 @@ Here's an example for a calculator application (this example is included in the 
 Scenario Outlines
 -----------------
 
-Sometimes it is useful to parametrize a scenario and run it multiple times, subsituting values. For
+Sometimes it is useful to parametrize a scenario and run it multiple times, substituting values. For
 this purpose, use *scenario outlines*. The format is the same as a scenario, except you can indicate
-places where a value should be subsituted using angle brackets: < and >. You specify the values
+places where a value should be substituted using angle brackets: < and >. You specify the values
 to be substituted using an "Examples" section that follows the scenario outline::
 
     Scenario Outline: Add two numbers
@@ -60,7 +60,7 @@ to be substituted using an "Examples" section that follows the scenario outline:
       | 0       | 40      | add    | 40     |
 
 In this case, the scenario will be executed once for each row in the table (except the first row,
-which indicates which variable to subsitute for).
+which indicates which variable to substitute for).
 
 
 Step Definitions
@@ -124,7 +124,7 @@ storage areas which can be imported from the `freshen` module. They are:
 - ``scc``: Scenario context, cleared at the start of each scenario
 
 These objects are built to mimic a JavaScript/Lua-like table, where fields can be accessed with
-either the square bracket notation, or the attribute notation. The they do not complain when a key
+either the square bracket notation, or the attribute notation. They do not complain when a key
 is missing::
 
     gcc.stuff == gcc['stuff']  => True
@@ -226,7 +226,7 @@ Additional notes
 on coming up with new syntax for something that already exists?
 
 **Why use Nose?** - Because it works and lots of people use it and it already does many useful
-things. Life is short, so why spend it reimplementing coverage, profiling, test discovery, and
+things. Life is short, so why spend it re-implementing coverage, profiling, test discovery, and
 command like processing again?
 
 **Can I contribute?** - Yes, please! While the tool is currently a copy of Cucumber's syntax,
