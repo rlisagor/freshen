@@ -99,7 +99,7 @@ def hook_decorator(kind):
             # We got some tags, so we need to produce the real decorator
             def d(func):
                 def func_wrapper(scenario):
-                    if TagMatcher(args).check_match(scenario.tags):
+                    if TagMatcher(args).check_match(scenario.get_tags()):
                         func(scenario)
 
                 step_registry[kind].add(func_wrapper)

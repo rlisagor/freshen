@@ -14,6 +14,9 @@ class Feature(object):
         self.description = description
         self.scenarios = scenarios
         
+        for sc in scenarios:
+            sc.feature = self
+        
     def __repr__(self):
         return '<Feature "%s": %d scenario(s)>' % (self.name, len(self.scenarios))
 
@@ -32,6 +35,9 @@ class Scenario(object):
     
     def __repr__(self):
         return '<Scenario "%s">' % self.name
+
+    def get_tags(self):
+        return self.tags + self.feature.tags
 
     def iterate(self):
         yield self
@@ -52,7 +58,9 @@ class ScenarioOutline(Scenario):
                 new_steps = []
                 for step in self.steps:
                     new_steps.append(step.set_values(values))
-                yield Scenario(self.tags, self.name, new_steps)
+                sc = Scenario(self.tags, self.name, new_steps)
+                sc.feature = self.feature
+                yield sc
 
 
 class Step(object):
