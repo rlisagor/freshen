@@ -166,7 +166,7 @@ def find_and_run_match(step):
             return result[0](step.arg, *result[1].groups())
         else:
             return result[0](*result[1].groups())
-    except (UndefinedStep, ExceptionWrapper):
+    except (UndefinedStep, AssertionError, ExceptionWrapper):
         raise
     except Exception, e:
         raise ExceptionWrapper(sys.exc_info(), step)
@@ -322,7 +322,7 @@ class FreshenNosePlugin(Plugin):
     def formatFailure(self, test, err):
         if hasattr(test, 'test') and isinstance(test.test, FreshenTestCase):
             ec, ev, tb = err
-            if ec is ExceptionWrapper:
+            if ec is ExceptionWrapper and isinstance(ev, Exception):
                 orig_ec, orig_ev, orig_tb = ev.e
                 return (orig_ec, str(orig_ev) + "\n\n>> in " + format_step(ev.step), orig_tb)
             else:
