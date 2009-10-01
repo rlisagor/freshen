@@ -141,6 +141,11 @@ def grammar(fname, language, convert=True, base_line=0):
     
     def process_tag(s):
         return s[0].strip("@")
+
+    #BB: test if "language" is ok
+    if language not in LANGUAGES:
+        # probably not the 'official' way to warn user about a bad option
+        raise Exception, 'OptionError: the language %s is not available' % language
     
     empty_not_n    = empty.copy().setWhitespaceChars(" \t")
     tags           = OneOrMore(Word("@", alphanums + "_").setParseAction(process_tag))
