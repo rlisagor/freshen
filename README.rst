@@ -213,11 +213,28 @@ Some useful flags for ``nosetests``:
 - ``--tags``: Only run the features and scenarios with the given tags. Tags should follow this
   option as a comma-separated list. A tag may be prefixed with a tilde (``~``) to negate it and only
   execute features and scenarios which do *not* have the given tag.
+- ``--language``: Run the tests using the designated language. See the
+  ``Internationalisation`` section for more details
 
 You should be able to use all the other Nose features, like coverage or profiling for "free". You
 can also run all your unit, doctests, and Freshen tests in one go. Please consult the `Nose manual`_
 for more details.
 
+Internationalisation
+--------------------
+
+Freshen now supports 30 languages, exactly the same as cucumber, since the
+"language" file was borrowed from the cucumber project. As long as your
+'.feature' files respect the syntax, the person in charge of writing the 
+acceptance tests may write it down in his/her mother tongue.
+
+The 'examples' directory contains a French sample. It's a simple translation of
+the english 'calc'. If you want to check the example, go to the 'calc_fr' 
+directory, and run:
+
+    $ nosetests --with-freshen --language=fr
+
+The default language is 'en'. 
 
 Additional notes
 ----------------
