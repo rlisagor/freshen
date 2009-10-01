@@ -1,3 +1,4 @@
+#-*- coding: utf8 -*-
 from nose.tools import *
 import re as _re
 import difflib as _difflib

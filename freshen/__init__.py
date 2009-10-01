@@ -1,3 +1,4 @@
+#-*- coding: utf8 -*-
 __all__ = ['Given', 'When', 'Then', 'And', 'Before', 'After', 'AfterStep', 'run_steps', 'glc', 'scc']
 
 import imp
@@ -19,6 +20,7 @@ from pyparsing import ParseException
 
 import logging
 log = logging.getLogger('nose.plugins.freshen')
+
 
 # This line ensures that frames from this file will not be shown in tracebacks
 __unittest = 1
@@ -217,13 +219,13 @@ class FreshenTestCase(unittest.TestCase):
 
 definition_paths = []
 
-def load_feature(fname):
+def load_feature(fname, language):
     """ Load and parse a feature file. """
 
     fname = os.path.abspath(fname)
     path = os.path.dirname(fname)
     
-    feat = parser.parse_file(fname)
+    feat = parser.parse_file(fname, language)
 
     if path not in definition_paths:
         log.debug("Looking for step defs in %s" % path)
@@ -262,11 +264,16 @@ class FreshenNosePlugin(Plugin):
                                "match the given tags. Should be a comma-separated "
                                "list. Each tag can be prefixed with a ~ to negate "
                                "[NOSE_FRESHEN_TAGS]")
+        parser.add_option('--language', action="store", dest='language',
+            default='en',
+            help='Change the language used when reading the feature files',
+        )
 
     def configure(self, options, config):
         super(FreshenNosePlugin, self).configure(options, config)
         all_tags = options.tags.split(",") if options.tags else []
         self.tagmatcher = TagMatcher(all_tags)
+        self.language = options.language
     
     def wantDirectory(self, dirname):
         if not os.path.exists(os.path.join(dirname, ".freshenignore")):
@@ -279,7 +286,7 @@ class FreshenNosePlugin(Plugin):
     def loadTestsFromFile(self, filename, indexes=[]):
         log.debug("Loading from file %s" % filename)
         try:
-            feat = load_feature(filename)
+            feat = load_feature(filename, self.language)
         except ParseException, e:
             ec, ev, tb = sys.exc_info()
             yield Failure(ParseException, ParseException(e.pstr, e.loc, e.msg + " in %s" % filename), tb)

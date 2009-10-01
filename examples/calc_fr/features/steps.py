@@ -1,3 +1,4 @@
+#-*- coding: utf8 -*-
 from freshen import *
 from freshen.checks import *
 

@@ -1,9 +1,21 @@
+#-*- coding: utf8 -*-
+
 from pyparsing import *
 import re
 import copy
 import textwrap
 import logging
 log = logging.getLogger('nose.plugins.freshen')
+
+#BB
+import yaml
+import os
+directory, _f = os.path.split(os.path.abspath(__file__))
+LANGUAGES = yaml.load(open(os.path.join(directory, 'languages.yml')))
+
+def clean_litteral(key, language):
+    return LANGUAGES[language][key].encode('utf')
+#BB
 
 
 class Feature(object):
@@ -103,7 +115,7 @@ class Table(object):
             yield dict(zip(self.headings, row))
 
 
-def grammar(fname, convert=True, base_line=0):
+def grammar(fname, language, convert=True, base_line=0):
     
     def create_object(klass):
         def untokenize(s, loc, toks):
@@ -136,7 +148,7 @@ def grammar(fname, convert=True, base_line=0):
     following_text = empty_not_n + restOfLine
     section_header = lambda name: Suppress(name + ":") + following_text
     
-    section_name   = Literal("Scenario") | Literal("Scenario Outline")
+    section_name   = Literal(clean_litteral("scenario", language)) | Literal(clean_litteral("scenario_outline", language))
     descr_block    = Group(SkipTo(section_name | tags).setParseAction(process_descr))
     
     table_row      = Group(Suppress("|") +
@@ -152,17 +164,17 @@ def grammar(fname, convert=True, base_line=0):
                       Suppress('"""'))
     m_string.setParseAction(process_m_string)
     
-    step_name      = Keyword("Given") | Keyword("When") | Keyword("Then") | Keyword("And")
+    step_name      = Keyword(clean_litteral('given', language)) | Keyword(clean_litteral('when', language)) | Keyword(clean_litteral('then', language)) | Keyword(clean_litteral('and', language))
     step           = step_name + following_text + Optional(table | m_string)
     steps          = Group(ZeroOrMore(step))
 
-    example        = section_header("Examples") + table
+    example        = section_header(clean_litteral('examples', language)) + table
     
-    scenario       = Group(Optional(tags)) + section_header("Scenario") + steps
-    scenario_outline = Group(Optional(tags)) + section_header("Scenario Outline") + steps + Group(OneOrMore(example))
+    scenario       = Group(Optional(tags)) + section_header(clean_litteral('scenario', language)) + steps
+    scenario_outline = Group(Optional(tags)) + section_header(clean_litteral('scenario_outline', language)) + steps + Group(OneOrMore(example))
     
     feature        = (Group(Optional(tags)) +
-                      section_header("Feature") +
+                      section_header(clean_litteral('feature', language)) +
                       descr_block +
                       Group(OneOrMore(scenario | scenario_outline)))
     
@@ -180,8 +192,8 @@ def grammar(fname, convert=True, base_line=0):
     
     return feature, steps
 
-def parse_file(fname, convert=True):
-    feature, _ = grammar(fname, convert)
+def parse_file(fname, language, convert=True):
+    feature, _ = grammar(fname, language, convert)
     if convert:
         return feature.parseFile(fname)[0]
     else:
