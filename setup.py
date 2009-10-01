@@ -9,7 +9,7 @@ from setuptools import setup
 setup(
     name='Freshen plugin',
     install_requires=['pyparsing>=1.5.0'],
-    version='0.1-bb',
+    version='0.1-i18n',
     author='Roman Lisagor',
     author_email = 'rlisagor+freshen@gmail.com',
     description = 'Freshen - clone of the Cucumber BDD framework',
