@@ -236,6 +236,18 @@ directory, and run:
 
 The default language is 'en'. 
 
+Available languages:
+
+ar (Arabic), bg (Bulgarian), cat (Catalan), cy (Welsh), cz (Czech), da (Danish),
+de (German), en-au (Australian), en (English), en-lol (LOLCAT), en-tx (Texan),
+es (Spanish), et (Estonian), fi (Finnish), fr (French), he (Hebrew),
+hr (Croatian), hu (Hungarian), id (Indonesian), it (Italian), ja (Japanese),
+ko (Korean), lt (Lithuanian), lv (Latvian), nl (Dutch), no (Norwegian),
+pl (Polish), pt (Portuguese), ro2 (Romanian - diacritical), ro (Romanian),
+ru (Russian), se (Swedish), sk (Slovak), uz (Uzbek), vi (Vietnamese),
+zh-CN (Chinese simplified), zh-TW Chinese traditional,
+
+
 Additional notes
 ----------------
 
