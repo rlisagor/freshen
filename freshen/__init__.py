@@ -17,6 +17,11 @@ from nose.failure import Failure
 from freshen import parser
 from pyparsing import ParseException
 
+try:
+    from os.path import relpath
+except Exception, e:
+    from compat import relpath
+
 import logging
 log = logging.getLogger('nose.plugins.freshen')
 
@@ -136,7 +141,7 @@ class ExceptionWrapper(Exception):
         self.step = step
 
 def format_step(step):
-    p = os.path.relpath(step.src_file, os.getcwd())
+    p = relpath(step.src_file, os.getcwd())
     return '"%s" # %s:%d' % (step.match,
                              p,
                              step.src_line)
@@ -145,7 +150,7 @@ def format_step(step):
 class UndefinedStep(Exception):
     
     def __init__(self, step):
-        p = os.path.relpath(step.src_file, os.getcwd())
+        p = relpath(step.src_file, os.getcwd())
         super(UndefinedStep, self).__init__(format_step(step))
 
 def find_and_run_match(step):
