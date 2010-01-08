@@ -214,13 +214,13 @@ Some useful flags for ``nosetests``:
   option as a comma-separated list. A tag may be prefixed with a tilde (``~``) to negate it and only
   execute features and scenarios which do *not* have the given tag.
 - ``--language``: Run the tests using the designated language. See the
-  ``Internationalisation`` section for more details
+  ``Internationalization`` section for more details
 
 You should be able to use all the other Nose features, like coverage or profiling for "free". You
 can also run all your unit, doctests, and Freshen tests in one go. Please consult the `Nose manual`_
 for more details.
 
-Internationalisation
+Internationalization
 --------------------
 
 Freshen now supports 30 languages, exactly the same as cucumber, since the

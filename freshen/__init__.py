@@ -10,6 +10,7 @@ import traceback
 import unittest
 import sys
 import types
+import yaml
 from nose.plugins import Plugin
 from nose.plugins.skip import SkipTest
 from nose.plugins.errorclass import ErrorClass, ErrorClassPlugin
@@ -238,6 +239,21 @@ def load_feature(fname, language):
     
     return feat
 
+class Language(object):
+    def __init__(self, mappings):
+        self.mappings = mappings
+    
+    def word(self, key):
+        return self.mappings[key].encode('utf')
+
+def load_language(language_name):
+    directory, _f = os.path.split(os.path.abspath(__file__))
+    languages = yaml.load(open(os.path.join(directory, 'languages.yml')))
+    if language_name not in languages:
+        return None
+    return Language(languages[language_name])
+
+
 class FreshenErrorPlugin(ErrorClassPlugin):
 
     enabled = True
@@ -273,7 +289,10 @@ class FreshenNosePlugin(Plugin):
         super(FreshenNosePlugin, self).configure(options, config)
         all_tags = options.tags.split(",") if options.tags else []
         self.tagmatcher = TagMatcher(all_tags)
-        self.language = options.language
+        self.language = load_language(options.language)
+        if not self.language:
+            print >> sys.stderr, "Error: language '%s' not available" % options.language
+            exit(1)
     
     def wantDirectory(self, dirname):
         if not os.path.exists(os.path.join(dirname, ".freshenignore")):
