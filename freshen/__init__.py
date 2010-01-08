@@ -120,14 +120,14 @@ Before = hook_decorator('before')
 After = hook_decorator('after')
 AfterStep = hook_decorator('after_step')
 
-def run_steps(spec):
+def run_steps(spec, language_name='en'):
     """ Called from within step definitions to run other steps. """
     
     caller = inspect.currentframe().f_back
     line = caller.f_lineno - 1
     fname = caller.f_code.co_filename
     
-    steps = parser.parse_steps(spec, fname, line)
+    steps = parser.parse_steps(spec, fname, line, load_language(language_name))
     
     for s in steps:
         find_and_run_match(s)
