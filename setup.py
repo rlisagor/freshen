@@ -8,7 +8,7 @@ from setuptools import setup
 
 setup(
     name='Freshen plugin',
-    install_requires=['pyparsing>=1.5.0'],
+    install_requires=['pyparsing>=1.5.0', 'PyYAML'],
     version='0.1',
     author='Roman Lisagor',
     author_email = 'rlisagor+freshen@gmail.com',
@@ -16,6 +16,7 @@ setup(
     license = 'GNU LGPL',
     py_modules = ['freshen'],
     packages = ['freshen'],
+    data_files = [('freshen', ['freshen/languages.yml'])],
     entry_points = {
         'nose.plugins.0.10': [
             'freshen = freshen:FreshenNosePlugin',
