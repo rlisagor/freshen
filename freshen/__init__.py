@@ -161,10 +161,11 @@ def find_and_run_match(step):
     result = None
     for r, f in step_registry['step'].iteritems():
         matches = r.match(step.match)
+        loc = f.__module__ + '.' + f.func_name
         if matches:
             if result:
-                raise FreshenException("Ambiguous: %s" % step.match)
-            result = f, matches
+                raise FreshenException("Ambiguous: %s\n %s, %s" % (step.match, loc, result[2]))
+            result = f, matches, loc
     
     if not result:
         raise UndefinedStep(step)
