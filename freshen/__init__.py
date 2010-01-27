@@ -17,6 +17,8 @@ from nose.plugins.errorclass import ErrorClass, ErrorClassPlugin
 from nose.selector import TestAddress
 from nose.failure import Failure
 from freshen import parser
+from freshen.stepsregistry import StepImplRegistry, AmbiguousStepImpl, UndefinedStepImpl
+from freshen.stepsregistry import *
 from pyparsing import ParseException
 
 try:
@@ -27,17 +29,8 @@ except Exception, e:
 import logging
 log = logging.getLogger('nose.plugins.freshen')
 
-
 # This line ensures that frames from this file will not be shown in tracebacks
 __unittest = 1
-
-# Step definitions and hooks collect here
-step_registry = {
-    'before': set(),
-    'after': set(),
-    'after_step': set(),
-    'step': {}
-}
 
 class TagMatcher(object):
     
@@ -87,40 +80,7 @@ glc = Context() # Global context - never cleared
 ftc = Context() # Feature context - cleared for every feature
 scc = Context() # Scenario context - cleared for every scenario
 
-def step_decorator(spec):
-    """ Decorator to wrap step definitions in. Registers definition. """
-    def wrapper(func):
-        r = re.compile(spec)
-        step_registry['step'][r] = func
-        return func
-    return wrapper
-
-def hook_decorator(kind):
-    """ Decorator to wrap hook definitions in. Registers hook. """
-    def decorator_wrapper(*args):
-        
-        if len(args) == 1 and callable(args[0]):
-            # No tags were passed to this decorator
-            step_registry[kind].add(args[0])
-            return args[0]
-        else:
-            # We got some tags, so we need to produce the real decorator
-            def d(func):
-                def func_wrapper(scenario):
-                    if TagMatcher(args).check_match(scenario.get_tags()):
-                        func(scenario)
-
-                step_registry[kind].add(func_wrapper)
-                return func_wrapper
-            return d
-    return decorator_wrapper
-
-Given = When = Then = And = step_decorator
-Before = hook_decorator('before')
-After = hook_decorator('after')
-AfterStep = hook_decorator('after_step')
-
-def run_steps(spec, language_name='en'):
+def run_steps(step_registry, spec, language_name='en'):
     """ Called from within step definitions to run other steps. """
     
     caller = inspect.currentframe().f_back
@@ -130,7 +90,7 @@ def run_steps(spec, language_name='en'):
     steps = parser.parse_steps(spec, fname, line, load_language(language_name))
     
     for s in steps:
-        find_and_run_match(s)
+        find_and_run_match(step_registry, s)
 
 # --- Internals ---
 
@@ -150,32 +110,18 @@ def format_step(step):
                              step.src_line)
 
 
-class UndefinedStep(Exception):
-    
-    def __init__(self, step):
-        p = relpath(step.src_file, os.getcwd())
-        super(UndefinedStep, self).__init__(format_step(step))
+def find_and_run_match(step_registry, step):
+    step_impl, args = step_registry.find_step_impl(step.match)
+    run_step(step, step_impl, args)
 
-def find_and_run_match(step):
-    """ Look up the step in the registry, then run it """
-    result = None
-    for r, f in step_registry['step'].iteritems():
-        matches = r.match(step.match)
-        loc = f.__module__ + '.' + f.func_name
-        if matches:
-            if result:
-                raise FreshenException("Ambiguous: %s\n %s, %s" % (step.match, loc, result[2]))
-            result = f, matches, loc
-    
-    if not result:
-        raise UndefinedStep(step)
-        
+def run_step(step, step_impl, args):
+    """ Run the given step """
     try:
         if step.arg is not None:
-            return result[0](step.arg, *result[1].groups())
+            return step_impl.func(step.arg, *args)
         else:
-            return result[0](*result[1].groups())
-    except (UndefinedStep, AssertionError, ExceptionWrapper):
+            return step_impl.func(*args)
+    except (UndefinedStepImpl, AssertionError, ExceptionWrapper):
         raise
     except Exception, e:
         raise ExceptionWrapper(sys.exc_info(), step)
@@ -200,10 +146,11 @@ class FreshenTestCase(unittest.TestCase):
     
     test_type = "http"
 
-    def __init__(self, feature, scenario, feature_suite):
+    def __init__(self, step_registry, feature, scenario, feature_suite):
         self.feature = feature
         self.scenario = scenario
         self.context = feature_suite
+        self.step_registry = step_registry
         
         self.description = feature.name + ": " + scenario.name
         super(FreshenTestCase, self).__init__()
@@ -211,38 +158,27 @@ class FreshenTestCase(unittest.TestCase):
     def setUp(self):
         #log.debug("Clearing scenario context")
         scc.clear()
-        for func in step_registry['before']:
+        for func in self.step_registry.get_hooks('before', self.scenario.get_tags()):
             func(self.scenario)
     
     def runTest(self):
         for step in self.scenario.steps:
-            res = find_and_run_match(step)
-            for func in step_registry['after_step']:
+            find_and_run_match(self.step_registry, step)
+            for func in self.step_registry.get_hooks('after_step', self.scenario.get_tags()):
                 func(self.scenario)
     
     def tearDown(self):
-        for func in step_registry['after']:
+        for func in self.step_registry.get_hooks('after', self.scenario.get_tags()):
             func(self.scenario)
 
-definition_paths = []
 
-def load_feature(fname, language):
+def load_feature(step_registry, fname, language):
     """ Load and parse a feature file. """
 
     fname = os.path.abspath(fname)
     path = os.path.dirname(fname)
-    
     feat = parser.parse_file(fname, language)
-
-    if path not in definition_paths:
-        log.debug("Looking for step defs in %s" % path)
-        try:
-            info = imp.find_module("steps", [path])
-            mod = imp.load_module("steps", *info)
-            definition_paths.append(path)
-        except ImportError, e:
-            log.debug(traceback.format_exc())
-    
+    step_registry.load_steps_impl(path)
     return feat
 
 class Language(object):
@@ -263,7 +199,7 @@ def load_language(language_name):
 class FreshenErrorPlugin(ErrorClassPlugin):
 
     enabled = True
-    undefined = ErrorClass(UndefinedStep,
+    undefined = ErrorClass(UndefinedStepImpl,
                            label="UNDEFINED",
                            isfailure=False)
 
@@ -296,6 +232,7 @@ class FreshenNosePlugin(Plugin):
         all_tags = options.tags.split(",") if options.tags else []
         self.tagmatcher = TagMatcher(all_tags)
         self.language = load_language(options.language)
+        self.step_registry = StepImplRegistry(TagMatcher)
         if not self.language:
             print >> sys.stderr, "Error: language '%s' not available" % options.language
             exit(1)
@@ -311,7 +248,7 @@ class FreshenNosePlugin(Plugin):
     def loadTestsFromFile(self, filename, indexes=[]):
         log.debug("Loading from file %s" % filename)
         try:
-            feat = load_feature(filename, self.language)
+            feat = load_feature(self.step_registry, filename, self.language)
         except ParseException, e:
             ec, ev, tb = sys.exc_info()
             yield Failure(ParseException, ParseException(e.pstr, e.loc, e.msg + " in %s" % filename), tb)
@@ -322,7 +259,7 @@ class FreshenNosePlugin(Plugin):
         for i, sc in enumerate(feat.iter_scenarios()):
             if (not indexes or (i + 1) in indexes):
                 if self.tagmatcher.check_match(sc.tags + feat.tags):
-                    yield FreshenTestCase(feat, sc, ctx)
+                    yield FreshenTestCase(self.step_registry, feat, sc, ctx)
                     cnt += 1
         
         if not cnt:

@@ -29,7 +29,7 @@ def check_outcome(exp_status):
         raise Exception("Failed with exit status %d\nOUTPUT:\n%s" % (scc.status, scc.output))
 
 @Then("^it should (pass|fail) with$")
-def check_outcome(exp_output, exp_status):
+def check_outcome_and_status(exp_output, exp_status):
     run_steps("Then it should %s" % exp_status)
     
     exp_output = exp_output.replace("{cwd}", scc.cwd)
