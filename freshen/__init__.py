@@ -1,5 +1,5 @@
 #-*- coding: utf8 -*-
-__all__ = ['Given', 'When', 'Then', 'And', 'Before', 'After', 'AfterStep', 'run_steps', 'glc', 'scc']
+__all__ = ['Given', 'When', 'Then', 'And', 'Before', 'After', 'AfterStep', 'glc', 'scc']
 
 import imp
 import inspect
@@ -80,19 +80,35 @@ glc = Context() # Global context - never cleared
 ftc = Context() # Feature context - cleared for every feature
 scc = Context() # Scenario context - cleared for every scenario
 
-def run_steps(step_registry, spec, language_name='en'):
-    """ Called from within step definitions to run other steps. """
-    
-    caller = inspect.currentframe().f_back
-    line = caller.f_lineno - 1
-    fname = caller.f_code.co_filename
-    
-    steps = parser.parse_steps(spec, fname, line, load_language(language_name))
-    
-    for s in steps:
-        find_and_run_match(step_registry, s)
-
 # --- Internals ---
+
+class StepsRunner(object):
+    
+    def __init__(self, step_registry):
+        self.step_registry = step_registry
+    
+    def run_steps_from_string(self, spec, language_name='en'):
+        """ Called from within step definitions to run other steps. """
+        
+        caller = inspect.currentframe().f_back
+        line = caller.f_lineno - 1
+        fname = caller.f_code.co_filename
+        
+        steps = parser.parse_steps(spec, fname, line, load_language(language_name))
+        for s in steps:
+            self.run_step(s)
+    
+    def run_step(self, step):
+        step_impl, args = self.step_registry.find_step_impl(step.match)
+        try:
+            if step.arg is not None:
+                return step_impl.func(self, step.arg, *args)
+            else:
+                return step_impl.func(self, *args)
+        except (UndefinedStepImpl, AssertionError, ExceptionWrapper):
+            raise
+        except Exception, e:
+            raise ExceptionWrapper(sys.exc_info(), step)
 
 class FreshenException(Exception):
     pass
@@ -109,22 +125,6 @@ def format_step(step):
                              p,
                              step.src_line)
 
-
-def find_and_run_match(step_registry, step):
-    step_impl, args = step_registry.find_step_impl(step.match)
-    run_step(step, step_impl, args)
-
-def run_step(step, step_impl, args):
-    """ Run the given step """
-    try:
-        if step.arg is not None:
-            return step_impl.func(step.arg, *args)
-        else:
-            return step_impl.func(*args)
-    except (UndefinedStepImpl, AssertionError, ExceptionWrapper):
-        raise
-    except Exception, e:
-        raise ExceptionWrapper(sys.exc_info(), step)
 
 class FeatureSuite(object):
 
@@ -146,11 +146,12 @@ class FreshenTestCase(unittest.TestCase):
     
     test_type = "http"
 
-    def __init__(self, step_registry, feature, scenario, feature_suite):
+    def __init__(self, step_runner, step_registry, feature, scenario, feature_suite):
         self.feature = feature
         self.scenario = scenario
         self.context = feature_suite
         self.step_registry = step_registry
+        self.step_runner = step_runner
         
         self.description = feature.name + ": " + scenario.name
         super(FreshenTestCase, self).__init__()
@@ -159,17 +160,17 @@ class FreshenTestCase(unittest.TestCase):
         #log.debug("Clearing scenario context")
         scc.clear()
         for func in self.step_registry.get_hooks('before', self.scenario.get_tags()):
-            func(self.scenario)
+            func(self.step_runner, self.scenario)
     
     def runTest(self):
         for step in self.scenario.steps:
-            find_and_run_match(self.step_registry, step)
+            self.step_runner.run_step(step)
             for func in self.step_registry.get_hooks('after_step', self.scenario.get_tags()):
-                func(self.scenario)
+                func(self.step_runner, self.scenario)
     
     def tearDown(self):
         for func in self.step_registry.get_hooks('after', self.scenario.get_tags()):
-            func(self.scenario)
+            func(self.step_runner, self.scenario)
 
 
 def load_feature(step_registry, fname, language):
@@ -259,7 +260,7 @@ class FreshenNosePlugin(Plugin):
         for i, sc in enumerate(feat.iter_scenarios()):
             if (not indexes or (i + 1) in indexes):
                 if self.tagmatcher.check_match(sc.tags + feat.tags):
-                    yield FreshenTestCase(self.step_registry, feat, sc, ctx)
+                    yield FreshenTestCase(StepsRunner(self.step_registry), self.step_registry, feat, sc, ctx)
                     cnt += 1
         
         if not cnt:

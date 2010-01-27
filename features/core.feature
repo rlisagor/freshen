@@ -37,7 +37,7 @@ Feature: Freshen core
         ----------------------------------------------------------------------
         Traceback (most recent call last):
           File "{cwd}/features/steps.py", line 14, in failing
-            flunker()
+            flunker(runner)
           File "{cwd}/features/steps.py", line 5, in flunker
             raise Exception("FAIL")
         Exception: FAIL
@@ -64,7 +64,7 @@ Feature: Freshen core
         ----------------------------------------------------------------------
         Traceback (most recent call last):
           File "{cwd}/features/steps.py", line 22, in fail_without_table
-            flunker()
+            flunker(runner)
           File "{cwd}/features/steps.py", line 5, in flunker
             raise Exception("FAIL")
         Exception: FAIL

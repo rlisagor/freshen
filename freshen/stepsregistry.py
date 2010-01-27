@@ -44,8 +44,8 @@ class HookImpl(object):
         self.func = func
         self.tags = tags
     
-    def __call__(self, scenario):
-        self.func(scenario)
+    def __call__(self, runner, scenario):
+        self.func(runner, scenario)
 
 
 class StepImplRegistry(object):
@@ -59,6 +59,7 @@ class StepImplRegistry(object):
         }
         self.tag_matcher_class = tag_matcher_class
         self.paths = []
+        self.module_counter = 0
     
     def load_steps_impl(self, path):
         """
@@ -68,7 +69,9 @@ class StepImplRegistry(object):
             log.debug("Looking for step defs in %s" % path)
             try:
                 info = imp.find_module("steps", [path])
-                mod = imp.load_module("steps", *info)
+                # Modules have to be loaded with unique names or else problems arise
+                mod = imp.load_module("steps" + str(self.module_counter), *info)
+                self.module_counter += 1
                 self.paths.append(path)
             except ImportError, e:
                 log.debug(traceback.format_exc())
@@ -77,6 +80,7 @@ class StepImplRegistry(object):
             for item_name in dir(mod):
                 item = getattr(mod, item_name)
                 if isinstance(item, StepImpl):
+                    #log.debug("Adding " + str(item.func.func_name) + " from " + path)
                     self.steps.append(item)
                 elif isinstance(item, HookImpl):
                     self.hooks[item.cb_type].append(item)
