@@ -99,13 +99,17 @@ class StepsRunner(object):
             self.run_step(s)
     
     def run_step(self, step):
-        step_impl, args = self.step_registry.find_step_impl(step.match)
         try:
+            step_impl, args = self.step_registry.find_step_impl(step.match)
             if step.arg is not None:
                 return step_impl.func(self, step.arg, *args)
             else:
                 return step_impl.func(self, *args)
-        except (UndefinedStepImpl, AssertionError, ExceptionWrapper):
+        except UndefinedStepImpl, e:
+            # Change the message to add the line number
+            e.args = (format_step(step),)
+            raise
+        except (AssertionError, ExceptionWrapper), e:
             raise
         except Exception, e:
             raise ExceptionWrapper(sys.exc_info(), step)
