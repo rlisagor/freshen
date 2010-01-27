@@ -17,8 +17,8 @@ from nose.plugins.errorclass import ErrorClass, ErrorClassPlugin
 from nose.selector import TestAddress
 from nose.failure import Failure
 from freshen import parser
-from freshen.stepsregistry import StepImplRegistry, AmbiguousStepImpl, UndefinedStepImpl
-from freshen.stepsregistry import *
+from freshen.stepregistry import StepImplRegistry, AmbiguousStepImpl, UndefinedStepImpl
+from freshen.stepregistry import *
 from pyparsing import ParseException
 
 try:
