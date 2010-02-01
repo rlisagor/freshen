@@ -43,6 +43,10 @@ class HookImpl(object):
         self.tags = tags
         self.func = func
         self.tags = tags
+        self.order = 0
+    
+    def __repr__(self):
+        return "<Hook: @%s %s(...)>" % (self.cb_type, self.func.func_name)
     
     def __call__(self, runner, scenario):
         self.func(runner, scenario)
@@ -84,6 +88,9 @@ class StepImplRegistry(object):
                     self.steps.append(item)
                 elif isinstance(item, HookImpl):
                     self.hooks[item.cb_type].append(item)
+            
+            for hooklist in self.hooks.itervalues():
+                hooklist.sort(cmp=lambda x,y: cmp(x.order, y.order))
     
     def find_step_impl(self, match):
         """
@@ -105,7 +112,7 @@ class StepImplRegistry(object):
         return result
     
     def get_hooks(self, cb_type, tags=[]):
-        return [h for h in self.hooks[cb_type] if self.tag_matcher_class(tags).check_match(h.tags)]
+        return [h for h in self.hooks[cb_type] if self.tag_matcher_class(h.tags).check_match(tags)]
 
 
 def step_decorator(spec):
