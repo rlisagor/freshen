@@ -1,7 +1,9 @@
 import os
 from freshen import *
 from freshen import TagMatcher, load_feature, load_language, StepsRunner
-from freshen.stepregistry import StepImplRegistry
+from freshen.stepregistry import StepImplRegistry, UndefinedStepImpl, AmbiguousStepImpl
+
+import traceback
 
 class FreshenHandler(object):
     
@@ -19,9 +21,24 @@ class FreshenHandler(object):
 
     def before_step(self, step):
         print "        before step", step
-
+    
+    def step_failed(self, step, e):
+        print "            failed", step, e
+        traceback.print_exc()
+    
+    def step_ambiguous(self, step, e):
+        print "            ambiguous", step, e
+        
+    def step_undefined(self, step, e):
+        print "            undefined", step, e
+    
+    def step_exception(self, step, e):
+        print "            exception", step, e
+        traceback.print_exc()
+    
     def after_step(self, step):
         print "        after step", step
+
 
 def run_scenario(step_registry, scenario, handler):
     handler.before_scenario(scenario)
@@ -36,7 +53,18 @@ def run_scenario(step_registry, scenario, handler):
     # Run all the steps
     for step in scenario.steps:
         handler.before_step(step)
-        runner.run_step(step)
+        
+        try:
+            runner.run_step(step)
+        except AssertionError, e:
+            handler.step_failed(step, e)
+        except UndefinedStepImpl, e:
+            handler.step_undefined(step, e)
+        except AmbiguousStepImpl, e:
+            handler.step_ambiguous(step, e)
+        except Exception, e:
+            handler.step_exception(step, e)
+        
         handler.after_step(step)
     
     # Run @After hooks
@@ -83,3 +111,4 @@ if __name__ == "__main__":
     features = load_features(paths, language)
     handler = FreshenHandler()
     run_features(registry, features, handler)
+

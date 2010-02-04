@@ -21,11 +21,6 @@ from freshen.stepregistry import StepImplRegistry, AmbiguousStepImpl, UndefinedS
 from freshen.stepregistry import *
 from pyparsing import ParseException
 
-try:
-    from os.path import relpath
-except Exception, e:
-    from compat import relpath
-
 import logging
 log = logging.getLogger('nose.plugins.freshen')
 
@@ -99,20 +94,12 @@ class StepsRunner(object):
             self.run_step(s)
     
     def run_step(self, step):
-        try:
-            step_impl, args = self.step_registry.find_step_impl(step.match)
-            if step.arg is not None:
-                return step_impl.run(self, step.arg, *args)
-            else:
-                return step_impl.run(self, *args)
-        except UndefinedStepImpl, e:
-            # Change the message to add the line number
-            e.args = (format_step(step),)
-            raise
-        except (AssertionError, ExceptionWrapper), e:
-            raise
-        except Exception, e:
-            raise ExceptionWrapper(sys.exc_info(), step)
+        step_impl, args = self.step_registry.find_step_impl(step)
+        if step.arg is not None:
+            return step_impl.run(self, step.arg, *args)
+        else:
+            return step_impl.run(self, *args)
+
 
 class FreshenException(Exception):
     pass
@@ -122,13 +109,6 @@ class ExceptionWrapper(Exception):
     def __init__(self, e, step):
         self.e = e
         self.step = step
-
-def format_step(step):
-    p = relpath(step.src_file, os.getcwd())
-    return '"%s" # %s:%d' % (step.match,
-                             p,
-                             step.src_line)
-
 
 class FeatureSuite(object):
 
@@ -168,7 +148,13 @@ class FreshenTestCase(unittest.TestCase):
     
     def runTest(self):
         for step in self.scenario.steps:
-            self.step_runner.run_step(step)
+            try:
+                self.step_runner.run_step(step)
+            except (AssertionError, UndefinedStepImpl, ExceptionWrapper):
+                raise
+            except Exception, e:
+                raise ExceptionWrapper(sys.exc_info(), step)
+            
             for step_impl in self.step_registry.get_hooks('after_step', self.scenario.get_tags()):
                 step_impl.run(self.step_runner, self.scenario)
     

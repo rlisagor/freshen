@@ -6,6 +6,12 @@ import logging
 import os
 import re
 import textwrap
+
+try:
+    from os.path import relpath
+except Exception, e:
+    from freshen.compat import relpath
+
 log = logging.getLogger('nose.plugins.freshen')
 
 class Feature(object):
@@ -74,7 +80,11 @@ class Step(object):
     
     def __repr__(self):
         return '<%s "%s">' % (self.step_type, self.match)
-
+    
+    def source_location(self, absolute=True):
+        p = relpath(self.src_file, os.getcwd()) if absolute else self.src_file
+        return '%s:%d' % (p, self.src_line)
+    
     def set_values(self, value_dict):
         result = copy.deepcopy(self)
         for name, value in value_dict.iteritems():

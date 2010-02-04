@@ -12,17 +12,17 @@ log = logging.getLogger('nose.plugins.freshen')
 
 class AmbiguousStepImpl(Exception):
     
-    def __init__(self, match, impl1, impl2):
-        self.match = match
+    def __init__(self, step, impl1, impl2):
+        self.step = step
         self.impl1 = impl1
         self.impl2 = impl2
-        super(AmbiguousStepImpl, self).__init__('Ambiguous: "%s"\n %s, %s' % (match, impl1, impl2))
+        super(AmbiguousStepImpl, self).__init__('Ambiguous: "%s"\n %s, %s' % (step.match, impl1, impl2))
 
 class UndefinedStepImpl(Exception):
     
-    def __init__(self, match):
-        self.match = match
-        super(UndefinedStepImpl, self).__init__('Undefined step: "%s"' % match)
+    def __init__(self, step):
+        self.step = step
+        super(UndefinedStepImpl, self).__init__('Undefined step: "%s"' % step.match)
 
 class StepImpl(object):
     
@@ -93,7 +93,7 @@ class StepImplRegistry(object):
             for hooklist in self.hooks.itervalues():
                 hooklist.sort(cmp=lambda x,y: cmp(x.order, y.order))
     
-    def find_step_impl(self, match):
+    def find_step_impl(self, step):
         """
         Find the implementation of the step for the given match string. Returns the StepImpl object
         corresponding to the implementation, and the arguments to the step implementation. If no
@@ -102,14 +102,14 @@ class StepImplRegistry(object):
         """
         result = None
         for si in self.steps:
-            matches = si.match(match)
+            matches = si.match(step.match)
             if matches:
                 if result:
-                    raise AmbiguousStepImpl(match, result[0], si)
+                    raise AmbiguousStepImpl(step, result[0], si)
                 result = si, matches.groups()
         
         if not result:
-            raise UndefinedStepImpl(match)
+            raise UndefinedStepImpl(step)
         return result
     
     def get_hooks(self, cb_type, tags=[]):
