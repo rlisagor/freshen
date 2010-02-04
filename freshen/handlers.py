@@ -50,7 +50,8 @@ class ConsoleHandler(FreshenHandler):
         print
     
     def _step(self, step, color):
-        print "        " + colored('%-40s' % step.match, color) + colored(" # " + step.source_location(), COMMENT)
+        print "        " + colored('%-40s' % (step.step_type + " " + step.match), color) + \
+                           colored(" # " + step.source_location(), COMMENT)
     
     def step_failed(self, step, e):
         self._step(step, FAILED)
