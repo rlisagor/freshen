@@ -1,5 +1,5 @@
 #-*- coding: utf8 -*-
-__all__ = ['Given', 'When', 'Then', 'And', 'Before', 'After', 'AfterStep', 'glc', 'scc']
+__all__ = ['Given', 'When', 'Then', 'And', 'Before', 'After', 'AfterStep', 'glc', 'scc', 'ftc']
 
 import imp
 import inspect
