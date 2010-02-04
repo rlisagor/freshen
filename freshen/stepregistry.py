@@ -77,7 +77,11 @@ class StepImplRegistry(object):
             if cwd not in sys.path:
                 sys.path.append(cwd)
             
-            info = imp.find_module("steps", [path])
+            try:
+                info = imp.find_module("steps", [path])
+            except ImportError:
+                return
+            
             # Modules have to be loaded with unique names or else problems arise
             mod = imp.load_module("steps" + str(self.module_counter), *info)
             self.module_counter += 1
