@@ -6,6 +6,7 @@ import sys
 import traceback
 
 __all__ = ['Given', 'When', 'Then', 'And', 'Before', 'After', 'AfterStep']
+__unittest = 1
 
 log = logging.getLogger('nose.plugins.freshen')
 
@@ -30,7 +31,7 @@ class StepImpl(object):
         self.func = func
         self.re_spec = re.compile(spec)
     
-    def __call__(self, *args, **kwargs):
+    def run(self, *args, **kwargs):
         self.func(*args, **kwargs)
     
     def match(self, match):
@@ -48,7 +49,7 @@ class HookImpl(object):
     def __repr__(self):
         return "<Hook: @%s %s(...)>" % (self.cb_type, self.func.func_name)
     
-    def __call__(self, runner, scenario):
+    def run(self, runner, scenario):
         self.func(runner, scenario)
 
 

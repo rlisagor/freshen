@@ -102,9 +102,9 @@ class StepsRunner(object):
         try:
             step_impl, args = self.step_registry.find_step_impl(step.match)
             if step.arg is not None:
-                return step_impl.func(self, step.arg, *args)
+                return step_impl.run(self, step.arg, *args)
             else:
-                return step_impl.func(self, *args)
+                return step_impl.run(self, *args)
         except UndefinedStepImpl, e:
             # Change the message to add the line number
             e.args = (format_step(step),)
@@ -163,18 +163,18 @@ class FreshenTestCase(unittest.TestCase):
     def setUp(self):
         #log.debug("Clearing scenario context")
         scc.clear()
-        for func in self.step_registry.get_hooks('before', self.scenario.get_tags()):
-            func(self.step_runner, self.scenario)
+        for hook_impl in self.step_registry.get_hooks('before', self.scenario.get_tags()):
+            hook_impl.run(self.step_runner, self.scenario)
     
     def runTest(self):
         for step in self.scenario.steps:
             self.step_runner.run_step(step)
-            for func in self.step_registry.get_hooks('after_step', self.scenario.get_tags()):
-                func(self.step_runner, self.scenario)
+            for step_impl in self.step_registry.get_hooks('after_step', self.scenario.get_tags()):
+                step_impl.run(self.step_runner, self.scenario)
     
     def tearDown(self):
-        for func in self.step_registry.get_hooks('after', self.scenario.get_tags()):
-            func(self.step_runner, self.scenario)
+        for hook_impl in self.step_registry.get_hooks('after', self.scenario.get_tags()):
+            hook_impl.run(self.step_runner, self.scenario)
 
 
 def load_feature(fname, language):
