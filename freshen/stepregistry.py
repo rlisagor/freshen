@@ -8,7 +8,7 @@ import traceback
 __all__ = ['Given', 'When', 'Then', 'And', 'Before', 'After', 'AfterStep']
 __unittest = 1
 
-log = logging.getLogger('nose.plugins.freshen')
+log = logging.getLogger('freshen')
 
 class AmbiguousStepImpl(Exception):
     
@@ -72,15 +72,11 @@ class StepImplRegistry(object):
         """
         if path not in self.paths:
             log.debug("Looking for step defs in %s" % path)
-            try:
-                info = imp.find_module("steps", [path])
-                # Modules have to be loaded with unique names or else problems arise
-                mod = imp.load_module("steps" + str(self.module_counter), *info)
-                self.module_counter += 1
-                self.paths.append(path)
-            except ImportError, e:
-                log.debug(traceback.format_exc())
-                return
+            info = imp.find_module("steps", [path])
+            # Modules have to be loaded with unique names or else problems arise
+            mod = imp.load_module("steps" + str(self.module_counter), *info)
+            self.module_counter += 1
+            self.paths.append(path)
             
             for item_name in dir(mod):
                 item = getattr(mod, item_name)
