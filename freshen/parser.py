@@ -1,5 +1,8 @@
 #-*- coding: utf8 -*-
 
+# This line ensures that frames from this file will not be shown in tracebacks
+__unittest = 1
+
 from pyparsing import *
 import copy
 import logging
@@ -12,7 +15,7 @@ try:
 except Exception, e:
     from freshen.compat import relpath
 
-log = logging.getLogger('nose.plugins.freshen')
+log = logging.getLogger('freshen')
 
 class Feature(object):
     

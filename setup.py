@@ -19,8 +19,8 @@ setup(
     data_files = [('freshen', ['freshen/languages.yml'])],
     entry_points = {
         'nose.plugins.0.10': [
-            'freshen = freshen:FreshenNosePlugin',
-            'freshenerr = freshen:FreshenErrorPlugin'
+            'freshen = freshen.noseplugin:FreshenNosePlugin',
+            'freshenerr = freshen.noseplugin:FreshenErrorPlugin'
             ]
         }
 

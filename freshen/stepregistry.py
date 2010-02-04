@@ -22,7 +22,7 @@ class UndefinedStepImpl(Exception):
     
     def __init__(self, step):
         self.step = step
-        super(UndefinedStepImpl, self).__init__('Undefined step: "%s"' % step.match)
+        super(UndefinedStepImpl, self).__init__('"%s" # %s' % (step.match, step.source_location()))
 
 class StepImpl(object):
     
