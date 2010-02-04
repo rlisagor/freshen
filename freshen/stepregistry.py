@@ -2,6 +2,7 @@
 import imp
 import logging
 import re
+import os
 import sys
 import traceback
 
@@ -72,6 +73,10 @@ class StepImplRegistry(object):
         """
         if path not in self.paths:
             log.debug("Looking for step defs in %s" % path)
+            cwd = os.getcwd()
+            if cwd not in sys.path:
+                sys.path.append(cwd)
+            
             info = imp.find_module("steps", [path])
             # Modules have to be loaded with unique names or else problems arise
             mod = imp.load_module("steps" + str(self.module_counter), *info)
