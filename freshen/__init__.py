@@ -177,13 +177,11 @@ class FreshenTestCase(unittest.TestCase):
             func(self.step_runner, self.scenario)
 
 
-def load_feature(step_registry, fname, language):
+def load_feature(fname, language):
     """ Load and parse a feature file. """
 
     fname = os.path.abspath(fname)
-    path = os.path.dirname(fname)
     feat = parser.parse_file(fname, language)
-    step_registry.load_steps_impl(path)
     return feat
 
 class Language(object):
@@ -253,7 +251,9 @@ class FreshenNosePlugin(Plugin):
     def loadTestsFromFile(self, filename, indexes=[]):
         log.debug("Loading from file %s" % filename)
         try:
-            feat = load_feature(self.step_registry, filename, self.language)
+            feat = load_feature(filename, self.language)
+            path = os.path.dirname(filename)
+            self.step_registry.load_steps_impl(path)
         except ParseException, e:
             ec, ev, tb = sys.exc_info()
             yield Failure(ParseException, ParseException(e.pstr, e.loc, e.msg + " in %s" % filename), tb)
