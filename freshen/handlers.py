@@ -1,4 +1,4 @@
-from freshen.core import FreshenHandler
+from freshen.cuke import FreshenHandler
 import sys
 import traceback
 
