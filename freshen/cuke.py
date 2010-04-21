@@ -3,7 +3,8 @@
 
 import os
 from freshen.context import *
-from freshen.core import StepsRunner, load_feature, load_language
+from freshen.core import TagMatcher, StepsRunner, load_feature, load_language
+from freshen.stepregistry import StepImplRegistry, UndefinedStepImpl, AmbiguousStepImpl
 
 class FreshenHandler(object):
     

@@ -9,7 +9,6 @@ import yaml
 
 from freshen.context import *
 from freshen.parser import parse_steps, parse_file
-from freshen.stepregistry import StepImplRegistry, UndefinedStepImpl, AmbiguousStepImpl
 
 
 class StepsRunner(object):
