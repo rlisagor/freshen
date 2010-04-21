@@ -72,7 +72,7 @@ class StepImplRegistry(object):
         Load the step implementations from a python module, named 'steps', found at the given path.
         """
         if path not in self.paths:
-            log.debug("Looking for step defs in %s" % path)
+            #log.debug("Looking for step defs in %s" % path)
             cwd = os.getcwd()
             if cwd not in sys.path:
                 sys.path.append(cwd)
