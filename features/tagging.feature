@@ -27,7 +27,7 @@ Feature: Tagging
         ----------------------------------------------------------------------
         Traceback (most recent call last):
           File "{cwd}/features/steps.py", line 14, in failing
-            flunker(runner)
+            flunker()
           File "{cwd}/features/steps.py", line 5, in flunker
             raise Exception("FAIL")
         Exception: FAIL
@@ -51,7 +51,7 @@ Feature: Tagging
     ----------------------------------------------------------------------
     Traceback (most recent call last):
       File "{cwd}/features/steps.py", line 14, in failing
-        flunker(runner)
+        flunker()
       File "{cwd}/features/steps.py", line 5, in flunker
         raise Exception("FAIL")
     Exception: FAIL

@@ -50,8 +50,8 @@ class HookImpl(object):
     def __repr__(self):
         return "<Hook: @%s %s(...)>" % (self.cb_type, self.func.func_name)
     
-    def run(self, runner, scenario):
-        self.func(runner, scenario)
+    def run(self, scenario):
+        self.func(scenario)
 
 
 class StepImplRegistry(object):

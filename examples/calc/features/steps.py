@@ -4,20 +4,20 @@ from freshen.checks import *
 import calculator
 
 @Before
-def before(runner, sc):
+def before(sc):
     scc.calc = calculator.Calculator()
     scc.result = None
 
 @Given("I have entered (\d+) into the calculator")
-def enter(runner, num):
+def enter(num):
     scc.calc.push(int(num))
 
 @When("I press (\w+)")
-def press(runner, button):
+def press(button):
     op = getattr(scc.calc, button)
     scc.result = op()
 
 @Then("the result should be (.*) on the screen")
-def check_result(runner, value):
+def check_result(value):
     assert_equal(str(scc.result), value)
 

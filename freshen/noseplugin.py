@@ -62,7 +62,7 @@ class FreshenTestCase(unittest.TestCase):
         #log.debug("Clearing scenario context")
         scc.clear()
         for hook_impl in self.step_registry.get_hooks('before', self.scenario.get_tags()):
-            hook_impl.run(self.step_runner, self.scenario)
+            hook_impl.run(self.scenario)
     
     def runTest(self):
         for step in self.scenario.steps:
@@ -73,12 +73,12 @@ class FreshenTestCase(unittest.TestCase):
             except:
                 raise ExceptionWrapper(sys.exc_info(), step)
             
-            for step_impl in self.step_registry.get_hooks('after_step', self.scenario.get_tags()):
-                step_impl.run(self.step_runner, self.scenario)
+            for hook_impl in self.step_registry.get_hooks('after_step', self.scenario.get_tags()):
+                hook_impl.run(self.scenario)
     
     def tearDown(self):
         for hook_impl in self.step_registry.get_hooks('after', self.scenario.get_tags()):
-            hook_impl.run(self.step_runner, self.scenario)
+            hook_impl.run(self.scenario)
 
 
 class FreshenErrorPlugin(ErrorClassPlugin):

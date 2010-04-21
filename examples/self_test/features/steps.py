@@ -1,81 +1,81 @@
 from freshen import *
 from nose.tools import *
 
-def flunker(runner):
+def flunker():
     raise Exception("FAIL")
 
 
 @Given("^passing$")
-def passing(runner, table):
+def passing(table):
     pass
 
 @Given("^failing$")
-def failing(runner, string):
-    flunker(runner)
+def failing(string):
+    flunker()
 
 @Given("^passing without a table$")
-def pass_without_table(runner):
+def pass_without_table():
     pass
 
 @Given("^failing without a table$")
-def fail_without_table(runner):
-    flunker(runner)
+def fail_without_table():
+    flunker()
 
 @Given("^a step definition that calls an undefined step$")
-def call_undef(runner):
+def call_undef():
     run_steps("Given this does not exist")
 
 @Given("^call step \"(.*)\"$")
-def call_step(runner, step):
+def call_step(step):
     run_steps("Given step")
 
 @Given("^'(.+)' cukes$")
-def do_cukes(runner, c):
+def do_cukes(c):
     if glc.cukes:
         raise Exception("We already have %s cukes!" % glc.cukes)
     glc.cukes = c
 
 @Then("^I should have '(.+)' cukes$")
-def should_have_cukes(runner, c):
+def should_have_cukes(c):
     assert_equals(c, glc.cukes)
 
 @Given("^'(.+)' global cukes$")
-def global_cukes(runner, c):
+def global_cukes(c):
     if scc.scenario_runs >= 1:
-        flunker(runner)
+        flunker()
     
     glc.cukes = c
     scc.scenario_runs += 1
 
 @Then("^I should have '(.+)' global cukes$")
-def check_global_cukes(runner, c):
+def check_global_cukes(c):
     assert_equals(c, glc.cukes)
 
 @Given("^table$")
-def with_table(runner, table):
+def with_table(table):
     scc.t = table
 
 @Given("^multiline string$")
-def with_m_string(runner, string):
+def with_m_string(string):
     scc.multiline = string
 
 @Then("^the table should be$")
-def check_table(runner, table):
+def check_table(table):
     assert_equals(scc.t, table)
 
 @Then("^the multiline string should be$")
-def check_m_string(runner, string):
+def check_m_string(string):
     assert_equals(scc.multiline)
 
 @Given("^failing expectation$")
-def failing_expectations(runner):
+def failing_expectations():
     assert_equals('this', 'that')
 
 @Given("^unused$")
-def unused(runner):
+def unused():
     pass
 
 @Given("^another unused$")
-def another_unused(runner):
+def another_unused():
     pass
 
