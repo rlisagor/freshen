@@ -3,7 +3,7 @@
 
 import os
 from freshen.context import *
-from freshen.core import StepsRunner, load_feature, load_step_definitions, load_language
+from freshen.core import StepsRunner, load_feature, load_language
 
 class FreshenHandler(object):
     
@@ -60,7 +60,7 @@ def run_scenario(step_registry, scenario, handler):
     
     # Run @Before hooks
     for hook_impl in step_registry.get_hooks('before', scenario.get_tags()):
-        hook_impl.run(runner, scenario)
+        hook_impl.run(scenario)
     
     # Run all the steps
     for step in scenario.steps:
@@ -87,7 +87,7 @@ def run_scenario(step_registry, scenario, handler):
     
     # Run @After hooks
     for hook_impl in step_registry.get_hooks('after', scenario.get_tags()):
-        hook_impl.run(runner, scenario)    
+        hook_impl.run(scenario)    
     handler.after_scenario(scenario)
 
 def run_feature(step_registry, feature, handler):
@@ -100,6 +100,12 @@ def run_feature(step_registry, feature, handler):
 def run_features(step_registry, features, handler):
     for feature in features:
         run_feature(step_registry, feature, handler)
+
+def load_step_definitions(paths):
+    sr = StepImplRegistry(TagMatcher)
+    for path in paths:
+        sr.load_steps_impl(path)
+    return sr
 
 def load_features(paths, language):
     result = []

@@ -64,12 +64,6 @@ def load_feature(fname, language):
     feat = parse_file(fname, language)
     return feat
 
-def load_step_definitions(paths):
-    sr = StepImplRegistry(TagMatcher)
-    for path in paths:
-        sr.load_steps_impl(path)
-    return sr
-
 def load_language(language_name):
     directory, _f = os.path.split(os.path.abspath(__file__))
     languages = yaml.load(open(os.path.join(directory, 'languages.yml')))

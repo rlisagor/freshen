@@ -189,15 +189,8 @@ before the tests run for use with a UI testing tool such as `Selenium`_.
 Using with Selenium
 -------------------
 
-Selenium_ is a widely used UI testing framework. You can make use of this framework in Freshen
-tests. To do so, include ``web.use_selenium()`` at the top of your step definition module. There is
-and example in the `source code`_. You can pass the following options::
-
-    web.use_selenium(host="localhost", port=4444, browser="*firefox", url="http://localhost", tags=[])
-
-The ``tags`` option will cause Selenium to only start for scenarios which match the given tags.
-
-When enabled, you can find the Selenium API object in ``glc.browser``.
+Selenium is not supported until plugin support is implemented. If you need to use Selenium, try
+version 0.1
 
 
 Running
