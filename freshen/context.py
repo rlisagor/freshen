@@ -1,3 +1,5 @@
+#-*- coding: utf8 -*-
+
 __all__ = ['glc', 'ftc', 'scc']
 
 # Contexts

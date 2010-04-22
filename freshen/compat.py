@@ -1,3 +1,5 @@
+#-*- coding: utf8 -*-
+
 from os.path import abspath, commonprefix, sep, pardir, join
 import os
 curdir = os.getcwd()

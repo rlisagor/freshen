@@ -1,3 +1,5 @@
+#-*- coding: utf8 -*-
+
 from freshen.cuke import FreshenHandler
 import sys
 import traceback
