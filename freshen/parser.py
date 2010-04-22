@@ -149,7 +149,7 @@ def grammar(fname, l, convert=True, base_line=0):
     empty_not_n    = empty.copy().setWhitespaceChars(" \t")
     tags           = OneOrMore(Word("@", alphanums + "_").setParseAction(process_tag))
     
-    following_text = empty_not_n + restOfLine
+    following_text = empty_not_n + restOfLine + Suppress(lineEnd)
     section_header = lambda name: Suppress(name + ":") + following_text
     
     section_name   = Literal(l.word("scenario")) | Literal(l.word("scenario_outline"))
@@ -162,7 +162,7 @@ def grammar(fname, l, convert=True, base_line=0):
                            Suppress("|"))
     table          = table_row + Group(OneOrMore(table_row))
     
-    m_string       = (Suppress(lineEnd + Literal('"""') + lineEnd).setWhitespaceChars(" \t") +
+    m_string       = (Suppress(Literal('"""') + lineEnd).setWhitespaceChars(" \t") +
                       SkipTo((lineEnd +
                               Literal('"""')).setWhitespaceChars(" \t")).setWhitespaceChars("") +
                       Suppress('"""'))
