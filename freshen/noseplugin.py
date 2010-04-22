@@ -15,7 +15,7 @@ from nose.failure import Failure
 
 from freshen.core import TagMatcher, load_language, load_feature, StepsRunner
 from freshen.context import *
-from freshen.stepregistry import StepImplRegistry, UndefinedStepImpl
+from freshen.stepregistry import StepImplLoader, StepImplRegistry, UndefinedStepImpl
 
 log = logging.getLogger('nose.plugins.freshen')
 
@@ -117,6 +117,7 @@ class FreshenNosePlugin(Plugin):
         all_tags = options.tags.split(",") if options.tags else []
         self.tagmatcher = TagMatcher(all_tags)
         self.language = load_language(options.language)
+        self.impl_loader = StepImplLoader()
         self.step_registry = StepImplRegistry(TagMatcher)
         if not self.language:
             print >> sys.stderr, "Error: language '%s' not available" % options.language
@@ -135,7 +136,7 @@ class FreshenNosePlugin(Plugin):
         try:
             feat = load_feature(filename, self.language)
             path = os.path.dirname(filename)
-            self.step_registry.load_steps_impl(path)
+            self.impl_loader.load_steps_impl(self.step_registry, path)
         except ParseException, e:
             ec, ev, tb = sys.exc_info()
             yield Failure(ParseException, ParseException(e.pstr, e.loc, e.msg + " in %s" % filename), tb)

@@ -4,7 +4,7 @@
 import os
 from freshen.context import *
 from freshen.core import TagMatcher, StepsRunner, load_feature, load_language
-from freshen.stepregistry import StepImplRegistry, UndefinedStepImpl, AmbiguousStepImpl
+from freshen.stepregistry import StepImplLoader, StepImplRegistry, UndefinedStepImpl, AmbiguousStepImpl
 
 class FreshenHandler(object):
     
@@ -103,9 +103,10 @@ def run_features(step_registry, features, handler):
         run_feature(step_registry, feature, handler)
 
 def load_step_definitions(paths):
+    loader = StepImplLoader()
     sr = StepImplRegistry(TagMatcher)
     for path in paths:
-        sr.load_steps_impl(path)
+        loader.load_steps_impl(sr, path)
     return sr
 
 def load_features(paths, language):

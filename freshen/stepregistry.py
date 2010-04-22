@@ -54,20 +54,13 @@ class HookImpl(object):
         self.func(scenario)
 
 
-class StepImplRegistry(object):
-    
-    def __init__(self, tag_matcher_class):
-        self.steps = []
-        self.hooks = {
-            'before': [],
-            'after': [],
-            'after_step': []
-        }
-        self.tag_matcher_class = tag_matcher_class
+class StepImplLoader(object):
+
+    def __init__(self):
         self.paths = []
         self.module_counter = 0
     
-    def load_steps_impl(self, path):
+    def load_steps_impl(self, registry, path):
         """
         Load the step implementations from a python module, named 'steps', found at the given path.
         """
@@ -90,13 +83,27 @@ class StepImplRegistry(object):
             for item_name in dir(mod):
                 item = getattr(mod, item_name)
                 if isinstance(item, StepImpl):
-                    #log.debug("Adding " + str(item.func.func_name) + " from " + path)
-                    self.steps.append(item)
+                    registry.add_step(item)
                 elif isinstance(item, HookImpl):
-                    self.hooks[item.cb_type].append(item)
-            
-            for hooklist in self.hooks.itervalues():
-                hooklist.sort(cmp=lambda x,y: cmp(x.order, y.order))
+                    registry.add_hook(item.cb_type, item)
+
+
+class StepImplRegistry(object):
+    
+    def __init__(self, tag_matcher_class):
+        self.steps = []
+        self.hooks = {
+            'before': [],
+            'after': [],
+            'after_step': []
+        }
+        self.tag_matcher_class = tag_matcher_class
+    
+    def add_step(self, step):
+        self.steps.append(step)
+    
+    def add_hook(self, hook_type, hook):
+        self.hooks[hook_type].append(hook)
     
     def find_step_impl(self, step):
         """
@@ -118,7 +125,9 @@ class StepImplRegistry(object):
         return result
     
     def get_hooks(self, cb_type, tags=[]):
-        return [h for h in self.hooks[cb_type] if self.tag_matcher_class(h.tags).check_match(tags)]
+        hooks = [h for h in self.hooks[cb_type] if self.tag_matcher_class(h.tags).check_match(tags)]
+        hooks.sort(cmp=lambda x,y: cmp(x.order, y.order))
+        return hooks
 
 
 def step_decorator(spec):
