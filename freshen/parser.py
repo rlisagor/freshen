@@ -146,13 +146,23 @@ def grammar(fname, l, convert=True, base_line=0):
     def process_tag(s):
         return s[0].strip("@")
     
+    def or_words(words, kind, suffix='', parse_acts=None):
+        elements = []
+        for index, native_word in enumerate(words):
+            for word in l.words(native_word):
+                element = kind(word + suffix)
+                if parse_acts is not None:
+                    element.setParseAction(parse_acts[index])
+                elements.append(element)
+        return Or(elements)
+    
     empty_not_n    = empty.copy().setWhitespaceChars(" \t")
     tags           = OneOrMore(Word("@", alphanums + "_").setParseAction(process_tag))
     
     following_text = empty_not_n + restOfLine + Suppress(lineEnd)
     section_header = lambda name: Suppress(name + ":") + following_text
     
-    section_name   = Literal(l.word("scenario")) | Literal(l.word("scenario_outline"))
+    section_name   = or_words(['scenario', 'scenario_outline'], Literal)
     descr_block    = Group(SkipTo(section_name | tags).setParseAction(process_descr))
     
     table_row      = Group(Suppress("|") +
@@ -168,17 +178,17 @@ def grammar(fname, l, convert=True, base_line=0):
                       Suppress('"""'))
     m_string.setParseAction(process_m_string)
     
-    step_name      = Keyword(l.word('given')) | Keyword(l.word('when')) | Keyword(l.word('then')) | Keyword(l.word('and'))
+    step_name      = or_words(['given', 'when', 'then', 'and'], Keyword)
     step           = step_name + following_text + Optional(table | m_string)
     steps          = Group(ZeroOrMore(step))
 
-    example        = section_header(l.word('examples')) + table
+    example        = or_words(['examples'], section_header) + table
     
-    scenario       = Group(Optional(tags)) + section_header(l.word('scenario')) + steps
-    scenario_outline = Group(Optional(tags)) + section_header(l.word('scenario_outline')) + steps + Group(OneOrMore(example))
+    scenario       = Group(Optional(tags)) + or_words(['scenario'], section_header) + steps
+    scenario_outline = Group(Optional(tags)) + or_words(['scenario_outline'], section_header) + steps + Group(OneOrMore(example))
     
     feature        = (Group(Optional(tags)) +
-                      section_header(l.word('feature')) +
+                      or_words(['feature'], section_header) +
                       descr_block +
                       Group(OneOrMore(scenario | scenario_outline)))
     

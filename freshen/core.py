@@ -50,11 +50,20 @@ class TagMatcher(object):
 
 
 class Language(object):
-    def __init__(self, mappings):
+    def __init__(self, mappings, default_mappings=None):
         self.mappings = mappings
+        self.default_mappings = default_mappings
     
-    def word(self, key):
-        return self.mappings[key].encode('utf')
+    def words(self, key):
+        """
+        Give all the synonymns of a word in the requested language 
+        (or the default language if no word is available).
+        """
+        if self.default_mappings is not None and key not in self.mappings:
+            return self.default_mappings[key].encode('utf').split("|")
+        else:
+            return self.mappings[key].encode('utf').split("|")
+
 
 def load_feature(fname, language):
     """ Load and parse a feature file. """
@@ -63,12 +72,13 @@ def load_feature(fname, language):
     feat = parse_file(fname, language)
     return feat
 
-def load_language(language_name):
+def load_language(language_name, default_language_name="en"):
     directory, _f = os.path.split(os.path.abspath(__file__))
-    languages = yaml.load(open(os.path.join(directory, 'languages.yml')))
+    language_path = os.path.join(directory, 'languages.yml')
+    languages = yaml.load(open(language_path))
     if language_name not in languages:
         return None
-    return Language(languages[language_name])
+    return Language(languages[language_name], languages[default_language_name])
 
 def run_steps(spec, language="en"):
     """ Can be called by the user from within a step definition to execute other steps. """
