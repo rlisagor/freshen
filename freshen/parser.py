@@ -204,7 +204,7 @@ def grammar(fname, l, convert=True, base_line=0):
                       Suppress('"""'))
     m_string.setParseAction(process_m_string)
     
-    step_name      = or_words(['given', 'when', 'then', 'and'], Keyword)
+    step_name      = or_words(['given', 'when', 'then', 'and', 'but'], Keyword)
     step           = step_name + following_text + Optional(table | m_string)
     steps          = Group(ZeroOrMore(step))
 

@@ -6,7 +6,7 @@ import os
 import sys
 import traceback
 
-__all__ = ['Given', 'When', 'Then', 'And', 'Before', 'After', 'AfterStep']
+__all__ = ['Given', 'When', 'Then', 'And', 'But', 'Before', 'After', 'AfterStep']
 __unittest = 1
 
 log = logging.getLogger('freshen')
@@ -151,7 +151,7 @@ def hook_decorator(cb_type):
             return d
     return decorator_wrapper
 
-Given = When = Then = And = step_decorator
+Given = When = Then = And = But = step_decorator
 Before = hook_decorator('before')
 After = hook_decorator('after')
 AfterStep = hook_decorator('after_step')
