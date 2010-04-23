@@ -65,7 +65,7 @@ class FreshenTestCase(unittest.TestCase):
             hook_impl.run(self.scenario)
     
     def runTest(self):
-        for step in self.scenario.steps:
+        for step in self.scenario.iter_steps():
             try:
                 self.step_runner.run_step(step)
             except (AssertionError, UndefinedStepImpl, ExceptionWrapper):

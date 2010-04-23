@@ -66,7 +66,7 @@ def run_scenario(step_registry, scenario, handler):
         hook_impl.run(scenario)
     
     # Run all the steps
-    for step in scenario.steps:
+    for step in scenario.iter_steps():
         handler.before_step(step)
         
         called = False

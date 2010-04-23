@@ -19,15 +19,19 @@ log = logging.getLogger('freshen')
 
 class Feature(object):
     
-    def __init__(self, tags, name, description, scenarios):
+    def __init__(self, tags, name, description, background, scenarios):
         self.tags = tags
         self.name = name
         self.description = description
         self.scenarios = scenarios
         
+        if background != []:
+            self.background = background[0]
+        
         for sc in scenarios:
             sc.feature = self
-        
+            sc.background = self.background
+            
     def __repr__(self):
         return '<Feature "%s": %d scenario(s)>' % (self.name, len(self.scenarios))
 
@@ -37,12 +41,26 @@ class Feature(object):
                 yield sc
 
 
+class Background(object):
+    
+    def __init__(self, name, steps):
+        self.name = name
+        self.steps = steps
+    
+    def __repr__(self):
+        return '<Background "%s">' % self.name
+
+    def iter_steps(self):
+        for step in self.steps:
+            yield step
+
 class Scenario(object):
     
     def __init__(self, tags, name, steps):
         self.tags = tags
         self.name = name
         self.steps = steps
+        self.background = None
     
     def __repr__(self):
         return '<Scenario "%s">' % self.name
@@ -52,6 +70,14 @@ class Scenario(object):
 
     def iterate(self):
         yield self
+        
+    def iter_steps(self):
+        if self.background is not None:
+            for step in self.background.iter_steps():
+                yield step
+        
+        for step in self.steps:
+            yield step
 
 
 class ScenarioOutline(Scenario):
@@ -162,7 +188,7 @@ def grammar(fname, l, convert=True, base_line=0):
     following_text = empty_not_n + restOfLine + Suppress(lineEnd)
     section_header = lambda name: Suppress(name + ":") + following_text
     
-    section_name   = or_words(['scenario', 'scenario_outline'], Literal)
+    section_name   = or_words(['scenario', 'scenario_outline', 'background'], Literal)
     descr_block    = Group(SkipTo(section_name | tags).setParseAction(process_descr))
     
     table_row      = Group(Suppress("|") +
@@ -184,12 +210,15 @@ def grammar(fname, l, convert=True, base_line=0):
 
     example        = or_words(['examples'], section_header) + table
     
+    background     = or_words(['background'], section_header) + steps
+    
     scenario       = Group(Optional(tags)) + or_words(['scenario'], section_header) + steps
     scenario_outline = Group(Optional(tags)) + or_words(['scenario_outline'], section_header) + steps + Group(OneOrMore(example))
     
     feature        = (Group(Optional(tags)) +
                       or_words(['feature'], section_header) +
                       descr_block +
+                      Group(Optional(background)) +
                       Group(OneOrMore(scenario | scenario_outline)))
     
     # Ignore tags for now as they are not supported
@@ -199,6 +228,7 @@ def grammar(fname, l, convert=True, base_line=0):
     if convert:
         table.setParseAction(create_object(Table))
         step.setParseAction(create_object(Step))
+        background.setParseAction(create_object(Background))
         scenario.setParseAction(create_object(Scenario))
         scenario_outline.setParseAction(create_object(ScenarioOutline))
         example.setParseAction(create_object(Examples))
