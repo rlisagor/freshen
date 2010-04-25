@@ -4,3 +4,6 @@ from freshen import *
 def step():
     pass
 
+@Given("^passing without a table$")
+def pass_without_table():
+    pass

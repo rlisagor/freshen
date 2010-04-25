@@ -118,7 +118,6 @@ class FreshenNosePlugin(Plugin):
         self.tagmatcher = TagMatcher(all_tags)
         self.language = load_language(options.language)
         self.impl_loader = StepImplLoader()
-        self.step_registry = StepImplRegistry(TagMatcher)
         if not self.language:
             print >> sys.stderr, "Error: language '%s' not available" % options.language
             exit(1)
@@ -133,10 +132,12 @@ class FreshenNosePlugin(Plugin):
     
     def loadTestsFromFile(self, filename, indexes=[]):
         log.debug("Loading from file %s" % filename)
+        
+        step_registry = StepImplRegistry(TagMatcher)
         try:
             feat = load_feature(filename, self.language)
             path = os.path.dirname(filename)
-            self.impl_loader.load_steps_impl(self.step_registry, path)
+            self.impl_loader.load_steps_impl(step_registry, path, feat.use_step_defs)
         except ParseException, e:
             ec, ev, tb = sys.exc_info()
             yield Failure(ParseException, ParseException(e.pstr, e.loc, e.msg + " in %s" % filename), tb)
@@ -147,7 +148,7 @@ class FreshenNosePlugin(Plugin):
         for i, sc in enumerate(feat.iter_scenarios()):
             if (not indexes or (i + 1) in indexes):
                 if self.tagmatcher.check_match(sc.tags + feat.tags):
-                    yield FreshenTestCase(StepsRunner(self.step_registry), self.step_registry, feat, sc, ctx)
+                    yield FreshenTestCase(StepsRunner(step_registry), step_registry, feat, sc, ctx)
                     cnt += 1
         
         if not cnt:

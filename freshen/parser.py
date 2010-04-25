@@ -19,7 +19,8 @@ log = logging.getLogger('freshen')
 
 class Feature(object):
     
-    def __init__(self, tags, name, description, background, scenarios):
+    def __init__(self, use_step_defs, tags, name, description, background, scenarios):
+        self.use_step_defs = use_step_defs
         self.tags = tags
         self.name = name
         self.description = description
@@ -189,6 +190,10 @@ def grammar(fname, l, convert=True, base_line=0):
     empty_not_n    = empty.copy().setWhitespaceChars(" \t")
     tags           = OneOrMore(Word("@", alphanums + "_").setParseAction(process_tag))
     
+    step_file      = quotedString.setParseAction( removeQuotes )
+    list_of_step_files = step_file + ZeroOrMore(Suppress(',') + step_file)
+    use_step_defs  = or_words(['use_step_defs'], Suppress, ':') + list_of_step_files
+    
     following_text = empty_not_n + restOfLine + Suppress(lineEnd)
     section_header = lambda name: Suppress(name + ":") + following_text
     
@@ -219,7 +224,8 @@ def grammar(fname, l, convert=True, base_line=0):
     scenario       = Group(Optional(tags)) + or_words(['scenario'], section_header) + steps
     scenario_outline = Group(Optional(tags)) + or_words(['scenario_outline'], section_header) + steps + Group(OneOrMore(example))
     
-    feature        = (Group(Optional(tags)) +
+    feature        = (Group(Optional(use_step_defs)) + 
+                      Group(Optional(tags)) +
                       or_words(['feature'], section_header) +
                       descr_block +
                       Group(Optional(background)) +

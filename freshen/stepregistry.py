@@ -57,28 +57,39 @@ class HookImpl(object):
 class StepImplLoader(object):
 
     def __init__(self):
-        self.paths = []
+        self.modules = {}
         self.module_counter = 0
     
-    def load_steps_impl(self, registry, path):
+    def load_steps_impl(self, registry, path, module_names=None):
         """
-        Load the step implementations from a python module, named 'steps', found at the given path.
+        Load the step implementations at the given path, with the given module names. If
+        module_names is None then the module 'steps' is searched by default.
         """
-        if path not in self.paths:
-            #log.debug("Looking for step defs in %s" % path)
-            cwd = os.getcwd()
-            if cwd not in sys.path:
-                sys.path.append(cwd)
+        
+        if not module_names:
+            module_names = ['steps']
+        
+        path = os.path.abspath(path)
+        
+        for module_name in module_names:
+            mod = self.modules.get((path, module_name))
             
-            try:
-                info = imp.find_module("steps", [path])
-            except ImportError:
-                return
-            
-            # Modules have to be loaded with unique names or else problems arise
-            mod = imp.load_module("steps" + str(self.module_counter), *info)
-            self.module_counter += 1
-            self.paths.append(path)
+            if mod is None:
+                #log.debug("Looking for step def module '%s' in %s" % (module_name, path))
+                cwd = os.getcwd()
+                if cwd not in sys.path:
+                    sys.path.append(cwd)
+                
+                try:
+                    info = imp.find_module(module_name, [path])
+                except ImportError:
+                    #log.debug("Did not find step defs module '%s' in %s" % (module_name, path))
+                    return
+                
+                # Modules have to be loaded with unique names or else problems arise
+                mod = imp.load_module("stepdefs_" + str(self.module_counter), *info)
+                self.module_counter += 1
+                self.modules[(path, module_name)] = mod
             
             for item_name in dir(mod):
                 item = getattr(mod, item_name)

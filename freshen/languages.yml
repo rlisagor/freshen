@@ -20,6 +20,7 @@
   then: Then
   and: And
   but: But
+  use_step_defs: Using step definitions from|Using steps
   space_after_keyword: true
 
 # Please help us keeping the languages below uptodate. The parsers for a language
@@ -235,6 +236,7 @@
   then: Alors
   and: Et
   but: Mais
+  use_step_defs: En utilisant les étapes|En utilisant les définitions d'étapes de
   space_after_keyword: true
 "he":
   name: Hebrew
