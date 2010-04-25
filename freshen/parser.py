@@ -24,6 +24,7 @@ class Feature(object):
         self.name = name
         self.description = description
         self.scenarios = scenarios
+        self.background = None
         
         if background != []:
             self.background = background[0]
@@ -34,6 +35,9 @@ class Feature(object):
             
     def __repr__(self):
         return '<Feature "%s": %d scenario(s)>' % (self.name, len(self.scenarios))
+
+    def has_background(self):
+        return self.background is not None
 
     def iter_scenarios(self):
         for sco in self.scenarios:
