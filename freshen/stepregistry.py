@@ -6,7 +6,7 @@ import os
 import sys
 import traceback
 
-__all__ = ['Given', 'When', 'Then', 'Before', 'After', 'AfterStep']
+__all__ = ['Given', 'When', 'Then', 'Before', 'After', 'AfterStep', 'Transform']
 __unittest = 1
 
 log = logging.getLogger('freshen')
@@ -61,6 +61,21 @@ class HookImpl(object):
         self.func(scenario)
 
 
+class TransformImpl(object):
+    
+    def __init__(self, spec_fragment, func):
+        self.spec_fragment = spec_fragment
+        self.re_spec = re.compile(spec_fragment)
+        self.func = func
+    
+    def is_match(self, arg):
+        return self.re_spec.match(arg) != None
+    
+    def transform_arg(self, arg):
+        match = self.re_spec.match(arg)
+        if match:
+            return self.func(*match.groups())
+
 class StepImplLoader(object):
 
     def __init__(self):
@@ -104,6 +119,8 @@ class StepImplLoader(object):
                     registry.add_step(item.step_type, item)
                 elif isinstance(item, HookImpl):
                     registry.add_hook(item.cb_type, item)
+                elif isinstance(item, TransformImpl):
+                    registry.add_transform(item)
 
 
 class StepImplRegistry(object):
@@ -120,6 +137,8 @@ class StepImplRegistry(object):
             'after': [],
             'after_step': []
         }
+        
+        self.transforms = []
         self.tag_matcher_class = tag_matcher_class
     
     def add_step(self, step_type, step):
@@ -128,12 +147,24 @@ class StepImplRegistry(object):
     def add_hook(self, hook_type, hook):
         self.hooks[hook_type].append(hook)
     
+    def add_transform(self, transform):
+        self.transforms.append(transform)
+    
+    def _apply_transforms(self, arg):
+        for transform in self.transforms:
+            if transform.is_match(arg):
+                return transform.transform_arg(arg)
+        return arg
+    
     def find_step_impl(self, step):
         """
         Find the implementation of the step for the given match string. Returns the StepImpl object
         corresponding to the implementation, and the arguments to the step implementation. If no
         implementation is found, raises UndefinedStepImpl. If more than one implementation is
         found, raises AmbiguousStepImpl.
+        
+        Each of the arguments returned will have been transformed by the first matching transform
+        implementation.
         """
         result = None
         for si in self.steps[step.step_type]:
@@ -141,7 +172,9 @@ class StepImplRegistry(object):
             if matches:
                 if result:
                     raise AmbiguousStepImpl(step, result[0], si)
-                result = si, matches.groups()
+                
+                args = [self._apply_transforms(arg) for arg in matches.groups()]
+                result = si, args
         
         if not result:
             raise UndefinedStepImpl(step)
@@ -176,10 +209,16 @@ def hook_decorator(cb_type):
             return d
     return decorator_wrapper
 
+def transform_decorator(spec_fragment):
+    def wrapper(func):
+        return TransformImpl(spec_fragment, func)
+    return wrapper
+
+
 Given = step_decorator('given')
 When = step_decorator('when')
 Then = step_decorator('then')
 Before = hook_decorator('before')
 After = hook_decorator('after')
 AfterStep = hook_decorator('after_step')
-
+Transform = transform_decorator
