@@ -17,7 +17,9 @@ class AmbiguousStepImpl(Exception):
         self.step = step
         self.impl1 = impl1
         self.impl2 = impl2
-        super(AmbiguousStepImpl, self).__init__('Ambiguous: "%s"\n %s, %s' % (step.match, impl1, impl2))
+        super(AmbiguousStepImpl, self).__init__('Ambiguous: "%s"\n %s\n %s' % (step.match,
+                                                                              impl1.get_location(),
+                                                                              impl2.get_location()))
 
 class UndefinedStepImpl(Exception):
     
@@ -37,6 +39,10 @@ class StepImpl(object):
     
     def match(self, match):
         return self.re_spec.match(match)
+        
+    def get_location(self):
+        code = self.func.func_code
+        return "%s:%d" % (code.co_filename, code.co_firstlineno)
 
 class HookImpl(object):
     
