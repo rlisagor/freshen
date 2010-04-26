@@ -1,0 +1,5 @@
+h1. Counter Independence Tests
+
+This example is not a real example. It is used as self tests. It is not in the self_test folder because we needed a sandbox for some tests.
+
+Note that some of the tests fail intentionally. The purpose is to verify actual output against expected output.
