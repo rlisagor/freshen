@@ -82,10 +82,12 @@ Feature: Freshen core
     Then it should pass with
         """
         A feature in a subdirectory: Passing ... ok
+        A feature in a subdirectory (indirect import): Passing ... ok
+        A feature in a subdirectory (undefined): Passing ... UNDEFINED: "passing without a table" # features/nested_two/nested.feature:4
         
         ----------------------------------------------------------------------
-        Ran 1 test in {time}
+        Ran 3 tests in {time}
 
-        OK
+        OK (UNDEFINED=1)
         """
 
