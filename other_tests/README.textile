@@ -1,0 +1,8 @@
+h1. Other Tests
+
+This directory contains Freshen's unit tests. These are partial tests only.
+
+To run the tests, go to the ROOT_DIR/other_tests and run
+
+bc. nosetests -v
+
