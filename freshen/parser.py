@@ -108,7 +108,7 @@ class ScenarioOutline(Scenario):
 class Step(object):
     
     def __init__(self, step_type, match, arg=None):
-        self.step_type = step_type
+        self.step_type_native, self.step_type = step_type
         self.match = match
         self.arg = arg
     
@@ -167,7 +167,28 @@ def grammar(fname, l, convert=True, base_line=0):
 
     def process_descr(s):
         return [p.strip() for p in s[0].strip().split("\n")]
-        
+    
+    # This has to be an array for compatibility with Python versions which do not have "nonlocal"
+    last_step_type = [None]
+    
+    def process_given_step(s):
+        last_step_type[0] = 'given'
+        return (s[0], 'given')
+    
+    def process_when_step(s):
+        last_step_type[0] = 'when'
+        return (s[0], 'when')
+    
+    def process_then_step(s):
+        last_step_type[0] = 'then'
+        return (s[0], 'then')
+    
+    def process_and_but_step(orig, loc, s):
+        if last_step_type[0] == None:
+            raise ParseFatalException(orig, loc,
+                        "'And' or 'But' steps can only come after 'Given', 'When', or 'Then'")
+        return (s[0], last_step_type[0])
+    
     def process_string(s):
         return s[0].strip()
     
@@ -213,7 +234,9 @@ def grammar(fname, l, convert=True, base_line=0):
                       Suppress('"""'))
     m_string.setParseAction(process_m_string)
     
-    step_name      = or_words(['given', 'when', 'then', 'and', 'but'], Keyword)
+    step_name      = or_words(['given', 'when', 'then', 'and', 'but'], Keyword, 
+                              parse_acts=[process_given_step, process_when_step, process_then_step,
+                                          process_and_but_step, process_and_but_step]) 
     step           = step_name + following_text + Optional(table | m_string)
     steps          = Group(ZeroOrMore(step))
 

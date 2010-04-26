@@ -6,7 +6,7 @@ import os
 import sys
 import traceback
 
-__all__ = ['Given', 'When', 'Then', 'And', 'But', 'Before', 'After', 'AfterStep']
+__all__ = ['Given', 'When', 'Then', 'Before', 'After', 'AfterStep']
 __unittest = 1
 
 log = logging.getLogger('freshen')
@@ -29,7 +29,8 @@ class UndefinedStepImpl(Exception):
 
 class StepImpl(object):
     
-    def __init__(self, spec, func):
+    def __init__(self, step_type, spec, func):
+        self.step_type = step_type
         self.spec = spec
         self.func = func
         self.re_spec = re.compile(spec)
@@ -100,7 +101,7 @@ class StepImplLoader(object):
             for item_name in dir(mod):
                 item = getattr(mod, item_name)
                 if isinstance(item, StepImpl):
-                    registry.add_step(item)
+                    registry.add_step(item.step_type, item)
                 elif isinstance(item, HookImpl):
                     registry.add_hook(item.cb_type, item)
 
@@ -108,7 +109,12 @@ class StepImplLoader(object):
 class StepImplRegistry(object):
     
     def __init__(self, tag_matcher_class):
-        self.steps = []
+        self.steps = {
+            'given': [],
+            'when': [],
+            'then': []
+        }
+        
         self.hooks = {
             'before': [],
             'after': [],
@@ -116,8 +122,8 @@ class StepImplRegistry(object):
         }
         self.tag_matcher_class = tag_matcher_class
     
-    def add_step(self, step):
-        self.steps.append(step)
+    def add_step(self, step_type, step):
+        self.steps[step_type].append(step)
     
     def add_hook(self, hook_type, hook):
         self.hooks[hook_type].append(hook)
@@ -130,7 +136,7 @@ class StepImplRegistry(object):
         found, raises AmbiguousStepImpl.
         """
         result = None
-        for si in self.steps:
+        for si in self.steps[step.step_type]:
             matches = si.match(step.match)
             if matches:
                 if result:
@@ -147,11 +153,13 @@ class StepImplRegistry(object):
         return hooks
 
 
-def step_decorator(spec):
-    """ Decorator to wrap step definitions in. Registers definition. """
-    def wrapper(func):
-        return StepImpl(spec, func)
-    return wrapper
+def step_decorator(step_type):
+    def decorator_wrapper(spec):
+        """ Decorator to wrap step definitions in. Registers definition. """
+        def wrapper(func):
+            return StepImpl(step_type, spec, func)
+        return wrapper
+    return decorator_wrapper
 
 def hook_decorator(cb_type):
     """ Decorator to wrap hook definitions in. Registers hook. """
@@ -168,7 +176,9 @@ def hook_decorator(cb_type):
             return d
     return decorator_wrapper
 
-Given = When = Then = And = But = step_decorator
+Given = step_decorator('given')
+When = step_decorator('when')
+Then = step_decorator('then')
 Before = hook_decorator('before')
 After = hook_decorator('after')
 AfterStep = hook_decorator('after_step')
