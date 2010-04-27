@@ -73,11 +73,11 @@ class FreshenTestCase(unittest.TestCase):
             except:
                 raise ExceptionWrapper(sys.exc_info(), step)
             
-            for hook_impl in self.step_registry.get_hooks('after_step', self.scenario.get_tags()):
+            for hook_impl in reversed(self.step_registry.get_hooks('after_step', self.scenario.get_tags())):
                 hook_impl.run(self.scenario)
     
     def tearDown(self):
-        for hook_impl in self.step_registry.get_hooks('after', self.scenario.get_tags()):
+        for hook_impl in reversed(self.step_registry.get_hooks('after', self.scenario.get_tags())):
             hook_impl.run(self.scenario)
 
 
