@@ -432,6 +432,7 @@
   then: Então|Entao
   and: E
   but: Mas
+  use_step_defs: Usar definições de passos de|Usar definições de passos
   space_after_keyword: true
 "ro":
   name: Romanian
