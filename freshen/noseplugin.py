@@ -157,22 +157,34 @@ class FreshenNosePlugin(Plugin):
     def loadTestsFromName(self, name, _=None):
         log.debug("Loading from name %s" % name)
         
-        indexes = []
-        if ":" not in name:
-            # let nose take care of it
+        if not self._is_file_with_indexes(name):
+            return # let nose take care of it
+            
+        name_without_indexes, indexes = self._split_file_in_indexes(name)
+        
+        if not os.path.exists(name_without_indexes):
             return
         
-        parts = name.split(":")
-        name = parts.pop(0)
-        indexes = set(int(p) for p in parts)
-        
-        if not os.path.exists(name):
-            return
-        
-        if os.path.isfile(name) and name.endswith(".feature"):
-            for tc in self.loadTestsFromFile(os.path.abspath(name), indexes):
+        if os.path.isfile(name_without_indexes) \
+           and name_without_indexes.endswith(".feature"):
+            for tc in self.loadTestsFromFile(name_without_indexes, indexes):
                 yield tc
-    
+                
+    def _is_file_with_indexes(self, name):
+        drive, tail = os.path.splitdrive(name)
+        if ":" not in tail:
+            return False
+        else:
+            return True
+        
+    def _split_file_in_indexes(self, name_with_indexes):
+        drive, tail = os.path.splitdrive(name_with_indexes)
+        parts = tail.split(":")
+        name_without_indexes = drive + parts.pop(0)
+        indexes = []
+        indexes = set(int(p) for p in parts)
+        return (name_without_indexes, indexes)
+        
     def describeTest(self, test):
         if isinstance(test.test, FreshenTestCase):
             return test.test.description
@@ -185,4 +197,5 @@ class FreshenNosePlugin(Plugin):
                 return (orig_ec, str(orig_ev) + '\n\n>> in "%s" # %s' % (ev.step.match, ev.step.source_location()), orig_tb)
     
     formatError = formatFailure
+
 
