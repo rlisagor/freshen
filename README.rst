@@ -1,11 +1,33 @@
 Freshen
 =======
 
-- Freshen is an acceptance testing framework for Python
-- It is built as a plugin for Nose_
-- It uses the (mostly) same syntax as Cucumber_
+- Freshen is an acceptance testing framework for Python.
+- It is built as a plugin for Nose_.
+- It uses the (mostly) same syntax as Cucumber_.
 
-Most of the information shown here can also be found on the Cucumber wiki, but here it is anyway:
+What's New in Version 0.2?
+--------------------------
+
+- Freshen now supports Background_ for a feature.
+- Freshen now supports the **But** keyword for steps of Scenarios_.
+- Freshen now supports the simple case of `Step Argument Transforms`_.
+- The parser now supports several natural language aliases for a keyword.
+- If a natural language translation is not found for a keyword, English will be used.
+- "@After" hooks are now run in the *opposite* order of which they are registered.
+- Improved error handling and reporting
+
+There is also some modifications that are incomatible with Cucumber. 
+
+- Only the step definition module named "steps" is used by default
+- Users can override this behavior with the "Use step definitions from" keyword
+- Freshen distinguishes "Given" steps from "When" steps and "Then" steps
+
+----------------------------------------------------------------------
+
+Freshen Documentation
+=====================
+
+Most of the information shown here can also be found on the `Cucumber wiki`_, but here it is anyway:
 
 Freshen tests are composed of two parts: `feature outlines`_ and `step definitions`_.
 
@@ -21,15 +43,19 @@ real tests.
 You can put your feature files anywhere you want in the source tree of your project, but it is
 recommended to place them in a dedicated "features" directory.
 
-A feature file contains the feature name with a free-form text description, followed by one or more
-`scenarios`_ or `scenario outlines`_.
+A feature file contains (in this order):
+
+- the step definition modules to use (*optional*, see `specifying step definition modules`_);
+- the feature name with a free-form text description;
+- a `background`_ (*optional*);
+- one or more `scenarios`_ or `scenario outlines`_.
 
 
 Scenarios
 ---------
 
 A scenario is an example of an interaction a user would have as part of the feature. It is comprised
-of a series of *steps*. Each step has to start with a keyword: "Given", "When", "And", or "Then".
+of a series of *steps*. Each step has to start with a keyword: **Given**, **When**, **Then**, **But** or **And**.
 Here's an example for a calculator application (this example is included in the `source code`_)::
 
     Scenario: Divide regular numbers
@@ -63,17 +89,47 @@ In this case, the scenario will be executed once for each row in the table (exce
 which indicates which variable to substitute for).
 
 
+Background
+----------
+
+A feature may contain a background. It allows you to *add some context to the scenarios* 
+in the current feature. A Background is much like a scenario containing a number of steps. 
+The difference is when it is run. 
+*The background is run before each of your scenarios but after any of your "@Before" hooks.*
+
+Here is an example::
+
+    Feature: Befriending
+      In order to have some friends
+      As a Facebook user
+      I want to be able to manage my list of friends
+      
+      Background:
+        Given I am the user Ken
+        And I have friends Barbie, Cloe
+    
+      Scenario: Adding a new friend
+        When I add a new friend named Jade
+        Then I should have friends Barbie, Cloe, Jade
+    
+      Scenario: Removing a friend
+        When I remove my friend Cloe
+        Then I should have friends Barbie
+
+*Note that background should be added in a feature only if it has a value for the client.* 
+Otherwise, you can use tagged hooks (see Tags_ and Hooks_).
+
+
 Step Definitions
 ----------------
 
-When presented with a feature file, Freshen will execute each scenario which involves iterating over
-each step in turn an executing its *step definition*. Step definitions are python functions adorned
-with a special decorator. Freshen knows which step definition function to execute by matching the
-step's text against a regular expression associated with the definition. Here's an example of a step
-definition file, which hopefully illustrates this point::
+When presented with a feature file, Freshen will execute each scenario. This involves iterating
+over each step in turn and executing its *step definition*. Step definitions are python functions
+adorned with a special decorator. Freshen knows which step definition function to execute by
+matching the step's text against a regular expression associated with the definition. Here's an
+example of a step definition file, which hopefully illustrates this point::
 
     from freshen import *
-    from freshen.checks import *
 
     import calculator
     
@@ -98,9 +154,48 @@ definition file, which hopefully illustrates this point::
 In this example, you see a few step definitions, as well as a hook. Any captures (bits inside the 
 parentheses) from the regular expression are passed to the step definition function as arguments.
 
-Freshen will look for step definition modules in every directory where it finds ``.feature`` files.
-The module should be named ``steps``. It can also be a python package, as long as all the
-relevant functions are imported into ``steps/__init__.py``.
+
+Specifying Step Definition Modules
+-----------------------------------
+
+Step definitions are defined in python modules. By default, Freshen will try to load
+a module named "steps" from the same directory as the .feature file. If that is not the
+desired behavior, you can also explicitly specify which step definition modules to use
+for a feature. To do this, use the keyword ``Using step definitions from``
+(or its abbreviation: ``Using steps``) and specify which step definition modules you
+want to use. Each module name must be a quoted string and must be relative to the
+location of the feature file. You can specify one or more module names (they must be
+separated by commas).
+
+Here is an example::
+
+    Using step definitions from: 'steps', 'step/page_steps'
+
+    Feature: Destroy a document
+      In order to take out one's anger on a document
+      As an unsatisfied reader 
+      I want to be able to rip off the pages of the document
+    
+      Scenario: Rip off a page
+        Given a document of 5 pages
+        And the page is 3
+        When I rip off the current page
+        Then the page is 3
+        But the document has 4 pages
+
+Although you have the opportunity to explicitly specify the step definition modules to use in Freshen, 
+this is not a reason to fall into the `Feature-Coupled Steps Antipattern`_!
+
+A step definition module can import other step definition modules. When doing this,
+the actual step definition functions must be at the top level. For example:
+
+    from other_step_module import *
+
+A step definition module can be a python package, as long as all the relevant functions are imported
+into __init__.py.
+
+The python path will automatically include the current working directory and the
+directory of the .feature file.
 
 
 Hooks
@@ -114,7 +209,7 @@ you can make use of *hooks*. Identify them for Freshen by adorning them with "@B
 Context storage
 ---------------
 
-Since the execution each scenario is broken up between multiple step functions, it is often
+Since the execution of each scenario is broken up between multiple step functions, it is often
 necessary to share information between steps. It is possible to do this using global variables in
 the step definition modules but, if you dislike that approach, Freshen provides three global
 storage areas which can be imported from the `freshen` module. They are:
@@ -127,8 +222,8 @@ These objects are built to mimic a JavaScript/Lua-like table, where fields can b
 either the square bracket notation, or the attribute notation. They do not complain when a key
 is missing::
 
-    gcc.stuff == gcc['stuff']  => True
-    gcc.doesnotexist           => None
+    glc.stuff == gcc['stuff']  => True
+    glc.doesnotexist           => None
 
 
 Multi-line arguments
@@ -168,6 +263,35 @@ executed selectively. A partial example::
     def needs_tmp_file(sc):
         make_tmp_file()
 
+
+Step Argument Transforms
+------------------------
+
+Step definitions are specified as regular expressions. Freshen will pass any
+captured sub-expressions (i.e. the parts in parentheses) to the step definition
+function as a string. However, it is often necessary to convert those strings
+into another type of object. For example, in the step
+
+    Then user bob shold be friends with user adelaide
+
+we may need to convert "user bob" to the the object User(name='bob') and
+"user adelaide" to User(name="adelaide"). To do this repeatedly would break
+the "Do Not Repeat Yourself (DRY)" principle of good software development. Step
+Argument Transforms allow you to specify an automatic transformation for 
+arguments if they match a certain regular expression. These transforms are
+created in the step defitnion file. For example:
+
+    @Transform(r"^user (\w+)$")
+    def transform_user(name):
+        return User.objects.find(name)
+
+    @Then(r"^(user \w+) should be friends with (user \w+)")
+    def check_friends(user1, user2):
+        # Here the arguments will already be User objects
+        assert user1.is_friends_with(user2)
+
+The two arguments to the "Then" step will be matched in the trsnsform above
+and converted into a User object before being passed to the step definition.
 
 Ignoring directories
 --------------------
@@ -219,7 +343,11 @@ Internationalization
 Freshen now supports 30 languages, exactly the same as cucumber, since the
 "language" file was borrowed from the cucumber project. As long as your
 '.feature' files respect the syntax, the person in charge of writing the 
-acceptance tests may write it down in his/her mother tongue.
+acceptance tests may write it down in his/her mother tongue. The only exception is
+the new keyword for `using only step definitions from modules`_ since it is not available
+in Cucumber_. For the moment, this keyword is available only in English, French,
+and Portugese. If you use another language, you must use the english keyword for this
+particular keyword (or translate it and add it to the ``languages.yml`` file).
 
 The 'examples' directory contains a French sample. It's a simple translation of
 the english 'calc'. If you want to check the example, go to the 'calc_fr' 
@@ -227,18 +355,7 @@ directory, and run:
 
     $ nosetests --with-freshen --language=fr
 
-The default language is 'en'. 
-
-Available languages:
-
-ar (Arabic), bg (Bulgarian), cat (Catalan), cy (Welsh), cz (Czech), da (Danish),
-de (German), en-au (Australian), en (English), en-lol (LOLCAT), en-tx (Texan),
-es (Spanish), et (Estonian), fi (Finnish), fr (French), he (Hebrew),
-hr (Croatian), hu (Hungarian), id (Indonesian), it (Italian), ja (Japanese),
-ko (Korean), lt (Lithuanian), lv (Latvian), nl (Dutch), no (Norwegian),
-pl (Polish), pt (Portuguese), ro2 (Romanian - diacritical), ro (Romanian),
-ru (Russian), se (Swedish), sk (Slovak), uz (Uzbek), vi (Vietnamese),
-zh-CN (Chinese simplified), zh-TW Chinese traditional,
+The default language is English.
 
 
 Additional notes
@@ -255,10 +372,12 @@ command like processing again?
 there's no law that says it has to be that forever. If you have any ideas or suggestions (or bugs!),
 please feel free to let me know, or simply clone the repo and play around.
 
+.. _`Source code`: http://github.com/rlisagor/freshen
 .. _`Nose`: http://somethingaboutorange.com/mrl/projects/nose/0.11.1/
 .. _`Nose manual`: http://somethingaboutorange.com/mrl/projects/nose/0.11.1/testing.html
 .. _`Cucumber`: http://cukes.info
-.. _`Source code`: http://github.com/rlisagor/freshen
+.. _`Cucumber wiki`: http://wiki.github.com/aslakhellesoy/cucumber/
+.. _`Feature-Coupled Steps Antipattern`: http://wiki.github.com/aslakhellesoy/cucumber/feature-coupled-steps-antipattern
 .. _`Selenium`: http://seleniumhq.org/
 .. _`Django`: http://www.djangoproject.com/
 .. _`django-sane-testing`: http://devel.almad.net/trac/django-sane-testing/
