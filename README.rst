@@ -8,7 +8,7 @@ Freshen
 What's New in Version 0.2?
 --------------------------
 
-- Freshen now supports Background_ for a feature.
+- Freshen now supports Backgrounds_ for a feature.
 - Freshen now supports the **But** keyword for steps of Scenarios_.
 - Freshen now supports the simple case of `Step Argument Transforms`_.
 - The parser now supports several natural language aliases for a keyword.
@@ -89,8 +89,8 @@ In this case, the scenario will be executed once for each row in the table (exce
 which indicates which variable to substitute for).
 
 
-Background
-----------
+Backgrounds
+-----------
 
 A feature may contain a background. It allows you to *add some context to the scenarios* 
 in the current feature. A Background is much like a scenario containing a number of steps. 
@@ -159,7 +159,7 @@ Specifying Step Definition Modules
 -----------------------------------
 
 Step definitions are defined in python modules. By default, Freshen will try to load
-a module named "steps" from the same directory as the .feature file. If that is not the
+a module named "steps" from the same directory as the ``.feature`` file. If that is not the
 desired behavior, you can also explicitly specify which step definition modules to use
 for a feature. To do this, use the keyword ``Using step definitions from``
 (or its abbreviation: ``Using steps``) and specify which step definition modules you
@@ -187,15 +187,15 @@ Although you have the opportunity to explicitly specify the step definition modu
 this is not a reason to fall into the `Feature-Coupled Steps Antipattern`_!
 
 A step definition module can import other step definition modules. When doing this,
-the actual step definition functions must be at the top level. For example:
+the actual step definition functions must be at the top level. For example::
 
     from other_step_module import *
 
 A step definition module can be a python package, as long as all the relevant functions are imported
-into __init__.py.
+into ``__init__.py``.
 
 The python path will automatically include the current working directory and the
-directory of the .feature file.
+directory of the ``.feature`` file.
 
 
 Hooks
@@ -270,7 +270,7 @@ Step Argument Transforms
 Step definitions are specified as regular expressions. Freshen will pass any
 captured sub-expressions (i.e. the parts in parentheses) to the step definition
 function as a string. However, it is often necessary to convert those strings
-into another type of object. For example, in the step
+into another type of object. For example, in the step::
 
     Then user bob shold be friends with user adelaide
 
@@ -279,7 +279,7 @@ we may need to convert "user bob" to the the object User(name='bob') and
 the "Do Not Repeat Yourself (DRY)" principle of good software development. Step
 Argument Transforms allow you to specify an automatic transformation for 
 arguments if they match a certain regular expression. These transforms are
-created in the step defitnion file. For example:
+created in the step defitnion file. For example::
 
     @Transform(r"^user (\w+)$")
     def transform_user(name):
@@ -296,7 +296,7 @@ and converted into a User object before being passed to the step definition.
 Ignoring directories
 --------------------
 
-If a directory contains files with the extension ".feature" but you'd like Freshen to skip over
+If a directory contains files with the extension ``.feature`` but you'd like Freshen to skip over
 it, simply place a file with the name ".freshenignore" in that directory.
 
 
@@ -314,7 +314,7 @@ Using with Selenium
 -------------------
 
 Selenium is not supported until plugin support is implemented. If you need to use Selenium, try
-version 0.1
+version 0.1.
 
 
 Running
@@ -342,16 +342,16 @@ Internationalization
 
 Freshen now supports 30 languages, exactly the same as cucumber, since the
 "language" file was borrowed from the cucumber project. As long as your
-'.feature' files respect the syntax, the person in charge of writing the 
+``.feature`` files respect the syntax, the person in charge of writing the 
 acceptance tests may write it down in his/her mother tongue. The only exception is
-the new keyword for `using only step definitions from modules`_ since it is not available
+the new keyword for `using step definitions from modules`_ since it is not available
 in Cucumber_. For the moment, this keyword is available only in English, French,
 and Portugese. If you use another language, you must use the english keyword for this
 particular keyword (or translate it and add it to the ``languages.yml`` file).
 
 The 'examples' directory contains a French sample. It's a simple translation of
 the english 'calc'. If you want to check the example, go to the 'calc_fr' 
-directory, and run:
+directory, and run::
 
     $ nosetests --with-freshen --language=fr
 
