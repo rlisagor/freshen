@@ -2,10 +2,8 @@ Todo
 ====
 
 - Django test runner
+- Selenium support
 - Ability to check on scenario status from hooks
-- Backgrounds
 - Strict mode
-- License
-- Refactor code to be proper classes and use less globals
-
+- Step argument transforms for tables and multi-line strings
 
