@@ -103,7 +103,9 @@ class StepImplLoader(object):
                     sys.path.append(cwd)
                 
                 try:
-                    info = imp.find_module(module_name, [path])
+                    actual_module_name = os.path.basename(module_name)
+                    complete_path = os.path.join(path, os.path.dirname(module_name))
+                    info = imp.find_module(actual_module_name, [complete_path])
                 except ImportError:
                     #log.debug("Did not find step defs module '%s' in %s" % (module_name, path))
                     return
