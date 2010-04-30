@@ -14,13 +14,13 @@ What's New in Version 0.2?
 - The parser now supports several natural language aliases for a keyword.
 - If a natural language translation is not found for a keyword, English will be used.
 - "@After" hooks are now run in the *opposite* order of which they are registered.
-- Improved error handling and reporting
+- Improved error handling and reporting.
 
-There is also some modifications that are incomatible with Cucumber. 
+There are also some modifications that are incompatible with Cucumber. 
 
-- Only the step definition module named "steps" is used by default
-- Users can override this behavior with the "Use step definitions from" keyword
-- Freshen distinguishes "Given" steps from "When" steps and "Then" steps
+- Only the step definition module named "steps" is used by default.
+- Users can override this behavior with the "Use step definitions from" keyword.
+- Freshen distinguishes "Given" steps from "When" steps and "Then" steps.
 
 ----------------------------------------------------------------------
 
@@ -47,7 +47,7 @@ A feature file contains (in this order):
 
 - the step definition modules to use (*optional*, see `specifying step definition modules`_);
 - the feature name with a free-form text description;
-- a `background`_ (*optional*);
+- a background (*optional*, see `backgrounds`_);
 - one or more `scenarios`_ or `scenario outlines`_.
 
 
@@ -290,7 +290,7 @@ created in the step defitnion file. For example::
         # Here the arguments will already be User objects
         assert user1.is_friends_with(user2)
 
-The two arguments to the "Then" step will be matched in the trsnsform above
+The two arguments to the "Then" step will be matched in the transform above
 and converted into a User object before being passed to the step definition.
 
 Ignoring directories
@@ -344,7 +344,7 @@ Freshen now supports 30 languages, exactly the same as cucumber, since the
 "language" file was borrowed from the cucumber project. As long as your
 ``.feature`` files respect the syntax, the person in charge of writing the 
 acceptance tests may write it down in his/her mother tongue. The only exception is
-the new keyword for `using step definitions from modules`_ since it is not available
+the new keyword for `specifying step definition modules`_ since it is not available
 in Cucumber_. For the moment, this keyword is available only in English, French,
 and Portugese. If you use another language, you must use the english keyword for this
 particular keyword (or translate it and add it to the ``languages.yml`` file).
