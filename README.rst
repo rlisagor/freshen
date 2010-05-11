@@ -225,6 +225,29 @@ is missing::
     glc.stuff == gcc['stuff']  => True
     glc.doesnotexist           => None
 
+Running steps from within step definitions
+------------------------------------------
+
+You can call out to a step definition from within another step using the same notation used in 
+feature files. To do this, use the ``run_steps`` function::
+
+    @Given('I do thing A')
+    def do_a():
+        #Do something useful.
+        pass
+    
+    @Given('I have B')
+    def having_b():
+        #Do something useful.
+        pass
+
+    @Given('I do something that use both')
+    def use_both():
+        run_steps("""
+                  Given I do thing A
+                  And I have B
+                  """)
+
 
 Multi-line arguments
 --------------------
