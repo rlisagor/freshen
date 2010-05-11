@@ -37,6 +37,9 @@ class StepImpl(object):
     
     def run(self, *args, **kwargs):
         self.func(*args, **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        self.func(*args, **kwargs)
     
     def match(self, match):
         return self.re_spec.match(match)
@@ -59,7 +62,9 @@ class HookImpl(object):
     
     def run(self, scenario):
         self.func(scenario)
-
+    
+    def __call__(self, *args, **kwargs):
+        self.func(*args, **kwargs)
 
 class TransformImpl(object):
     
@@ -75,6 +80,9 @@ class TransformImpl(object):
         match = self.re_spec.match(arg)
         if match:
             return self.func(*match.groups())
+    
+    def __call__(self, *args, **kwargs):
+        self.func(*args, **kwargs)
 
 class StepImplLoader(object):
 
