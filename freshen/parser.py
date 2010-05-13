@@ -102,6 +102,7 @@ class ScenarioOutline(Scenario):
                     new_steps.append(step.set_values(values))
                 sc = Scenario(self.tags, self.name, new_steps)
                 sc.feature = self.feature
+                sc.background = self.background
                 yield sc
 
 
