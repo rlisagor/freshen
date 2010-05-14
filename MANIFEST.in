@@ -1,0 +1,6 @@
+include README.rst *.txt LICENSE MANIFEST.in
+include freshen/languages.yml
+recursive-include examples *.feature *.py *.textile
+recursive-include features *.feature *.py *.textile
+recursive-include other_tests *.feature *.py *.textile
+
