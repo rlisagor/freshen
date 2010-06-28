@@ -84,6 +84,8 @@ class TransformImpl(object):
         self.func = func
     
     def is_match(self, arg):
+        if arg is None:
+            return False
         return self.re_spec.match(arg) != None
     
     def transform_arg(self, arg):
