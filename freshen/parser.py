@@ -223,7 +223,7 @@ def grammar(fname, l, convert=True, base_line=0):
     descr_block    = Group(SkipTo(section_name | tags).setParseAction(process_descr))
     
     table_row      = Group(Suppress("|") +
-                           delimitedList(Suppress(empty_not_n) +
+                           delimitedList(
                                          CharsNotIn("|\n").setParseAction(process_string) +
                                          Suppress(empty_not_n), delim="|") +
                            Suppress("|"))
