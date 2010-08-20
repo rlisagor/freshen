@@ -295,7 +295,7 @@ captured sub-expressions (i.e. the parts in parentheses) to the step definition
 function as a string. However, it is often necessary to convert those strings
 into another type of object. For example, in the step::
 
-    Then user bob shold be friends with user adelaide
+    Then user bob should be friends with user adelaide
 
 we may need to convert "user bob" to the the object User(name='bob') and
 "user adelaide" to User(name="adelaide"). To do this repeatedly would break
@@ -315,6 +315,47 @@ created in the step defitnion file. For example::
 
 The two arguments to the "Then" step will be matched in the transform above
 and converted into a User object before being passed to the step definition.
+
+Named Step Argument Transformation
+----------------------------------
+
+Another imperfection of step definitions from the DRY perspective is
+that they require repeated regular expressions to read "the same
+thing". By keeping expressions extremely simple the damage can be
+minimized, but sometimes it can be useful to centralize the pattern
+specifications for certain argument types. Named Step Argument
+Transforms allow the use of a unique name a substitution point for the
+regular expression associated with a transform. For example, for the
+step::
+
+  Then these users should be friends: "bob, adelaide, samantha"
+
+The following definitions can be used::
+
+ from itertools import combinations
+
+  @NamedTransform( '{user list}', r'("[\w\, ]+")', r'^"([\w\, ]+)"$' )
+  def transform_user_list( slist ):
+     return [ User.objects.find( name ) 
+              for name.strip() in slist.split( ',' ) ]
+
+  @Then(r"these users should be friends: {user list}" )
+  def check_all_friends( user_list ):
+      for user1, user2 in combinations( user_list, 2 ):
+          assert user1.is_friends_with( user2 )
+
+The arguments to `NamedTransform` are `name`, `in_pattern` and
+`out_pattern`, respectively. `NamedTranform` is equivalent to having
+`in_pattern` substituted for all occurances of `name` in step
+specifications, and defining a standard `Transform` with
+`out_pattern` as its pattern.
+
+The distinction between `in_pattern` and `out_pattern` is that the
+`in_pattern` can be used to match surrounding context to uniquely
+identify parameters, while the `out_pattern` searches within the text
+recognized by the `in_pattern` to pull out the semantially relevant
+parts. When this distinction is not relevant, specify only one
+pattern, and it will be used for both in and out patterns.
 
 Ignoring directories
 --------------------

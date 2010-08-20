@@ -1,12 +1,13 @@
-#-*- coding: utf8 -*-
+#-*- coding: utf-8 -*-
 import imp
 import logging
 import re
 import os
 import sys
 import traceback
+from itertools import chain
 
-__all__ = ['Given', 'When', 'Then', 'Before', 'After', 'AfterStep', 'Transform']
+__all__ = ['Given', 'When', 'Then', 'Before', 'After', 'AfterStep', 'Transform', 'NamedTransform']
 __unittest = 1
 
 log = logging.getLogger('freshen')
@@ -33,7 +34,12 @@ class StepImpl(object):
         self.step_type = step_type
         self.spec = spec
         self.func = func
-        self.re_spec = re.compile(spec)
+
+    def apply_named_transform( self, name, pattern ):
+        if name in self.spec:
+            self.spec = self.spec.replace( name, pattern )
+            if hasattr( self, 're_spec' ):
+                del self.re_spec
     
     def run(self, *args, **kwargs):
         self.func(*args, **kwargs)
@@ -42,6 +48,8 @@ class StepImpl(object):
         self.func(*args, **kwargs)
     
     def match(self, match):
+        if not hasattr( self, 're_spec' ):
+            self.re_spec = re.compile( self.spec )
         return self.re_spec.match(match)
         
     def get_location(self):
@@ -83,6 +91,18 @@ class TransformImpl(object):
     
     def __call__(self, *args, **kwargs):
         self.func(*args, **kwargs)
+
+class NamedTransformImpl( TransformImpl ):
+
+    def __init__( self, name, in_pattern, out_pattern, func ):
+        super( NamedTransformImpl, self ).__init__( out_pattern, func )
+        self.name = name
+        self.in_pattern = in_pattern
+        self.out_pattern = out_pattern
+
+    def apply_to_step( self, step ):
+        
+        step.apply_named_transform( self.name, self.in_pattern )
 
 class StepImplLoader(object):
 
@@ -129,9 +149,10 @@ class StepImplLoader(object):
                     registry.add_step(item.step_type, item)
                 elif isinstance(item, HookImpl):
                     registry.add_hook(item.cb_type, item)
+                elif isinstance(item, NamedTransformImpl):
+                    registry.add_named_transform(item)
                 elif isinstance(item, TransformImpl):
                     registry.add_transform(item)
-
 
 class StepImplRegistry(object):
     
@@ -149,16 +170,25 @@ class StepImplRegistry(object):
         }
         
         self.transforms = []
+        self.named_transforms = []
         self.tag_matcher_class = tag_matcher_class
     
     def add_step(self, step_type, step):
         self.steps[step_type].append(step)
+        for named_transform in self.named_transforms:
+            named_transform.apply_to_step( step )
     
     def add_hook(self, hook_type, hook):
         self.hooks[hook_type].append(hook)
     
     def add_transform(self, transform):
         self.transforms.append(transform)
+
+    def add_named_transform( self, named_transform ):
+        self.transforms.append( named_transform )
+        self.named_transforms.append( named_transform )
+        for step in chain( *self.steps.values() ):
+            named_transform.apply_to_step( step )
     
     def _apply_transforms(self, arg):
         for transform in self.transforms:
@@ -224,6 +254,11 @@ def transform_decorator(spec_fragment):
         return TransformImpl(spec_fragment, func)
     return wrapper
 
+def named_transform_decorator( name, in_pattern, out_pattern = None ):
+    if out_pattern is None: out_pattern = in_pattern
+    def wrapper( func ):
+        return NamedTransformImpl( name, in_pattern, out_pattern, func )
+    return wrapper
 
 Given = step_decorator('given')
 When = step_decorator('when')
@@ -232,3 +267,4 @@ Before = hook_decorator('before')
 After = hook_decorator('after')
 AfterStep = hook_decorator('after_step')
 Transform = transform_decorator
+NamedTransform = named_transform_decorator
