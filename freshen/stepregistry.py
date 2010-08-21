@@ -34,10 +34,12 @@ class StepImpl(object):
         self.step_type = step_type
         self.spec = spec
         self.func = func
+        self.named_transforms = []
 
-    def apply_named_transform( self, name, pattern ):
+    def apply_named_transform( self, name, pattern, transform ):
         if name in self.spec:
             self.spec = self.spec.replace( name, pattern )
+            self.named_transforms.append( transform )
             if hasattr( self, 're_spec' ):
                 del self.re_spec
     
@@ -101,8 +103,7 @@ class NamedTransformImpl( TransformImpl ):
         self.out_pattern = out_pattern
 
     def apply_to_step( self, step ):
-        
-        step.apply_named_transform( self.name, self.in_pattern )
+        step.apply_named_transform( self.name, self.in_pattern, self )
 
 class StepImplLoader(object):
 
@@ -185,13 +186,12 @@ class StepImplRegistry(object):
         self.transforms.append(transform)
 
     def add_named_transform( self, named_transform ):
-        self.transforms.append( named_transform )
         self.named_transforms.append( named_transform )
         for step in chain( *self.steps.values() ):
             named_transform.apply_to_step( step )
     
-    def _apply_transforms(self, arg):
-        for transform in self.transforms:
+    def _apply_transforms(self, arg, step):
+        for transform in chain( step.named_transforms, self.transforms ):
             if transform.is_match(arg):
                 return transform.transform_arg(arg)
         return arg
@@ -213,7 +213,7 @@ class StepImplRegistry(object):
                 if result:
                     raise AmbiguousStepImpl(step, result[0], si)
                 
-                args = [self._apply_transforms(arg) for arg in matches.groups()]
+                args = [self._apply_transforms(arg, si) for arg in matches.groups()]
                 result = si, args
         
         if not result:
