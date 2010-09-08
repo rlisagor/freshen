@@ -21,8 +21,11 @@ setup(
         'nose.plugins.0.10': [
             'freshen = freshen.noseplugin:FreshenNosePlugin',
             'freshenerr = freshen.noseplugin:FreshenErrorPlugin'
-            ]
-        },
+        ],
+        'console_scripts': [
+            'freshen-list = freshen.commands:list_steps',
+        ],
+    },
     classifiers = [
         "Development Status :: 4 - Beta",
         "License :: OSI Approved :: GNU General Public License (GPL)",
