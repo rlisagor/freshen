@@ -1,13 +1,9 @@
-#!/usr/bin/env python
-
 import sys
-from os import listdir
-from os.path import dirname, relpath, isdir, join
+import os
 
+from freshen.compat import relpath
 from freshen.core import TagMatcher, load_language, load_feature
 from freshen.stepregistry import StepImplLoader, StepImplRegistry, UndefinedStepImpl
-
-
 
 LANGUAGE = 'en'
 
@@ -32,24 +28,24 @@ def load_file(filepath):
     feature = load_feature(filepath, load_language(LANGUAGE))
     registry = StepImplRegistry(TagMatcher)
     loader = StepImplLoader()
-    loader.load_steps_impl(registry, dirname(feature.src_file), feature.use_step_defs)
+    loader.load_steps_impl(registry, os.path.dirname(feature.src_file), feature.use_step_defs)
     return registry
 
 def load_dir(dirpath):
     registry = StepImplRegistry(TagMatcher)
     loader = StepImplLoader()
     def walktree(top, filter_func=lambda x: True):
-        names = listdir(top)
+        names = os.listdir(top)
         for name in names:
-            path = join(top, name)
+            path = os.path.join(top, name)
             if filter_func(path):
                 yield path
-            if isdir(path):
+            if os.path.isdir(path):
                 for i in walktree(path, filter_func):
                     yield i
     for feature_file in walktree(dirpath, lambda x: x.endswith('.feature')):
         feature = load_feature(feature_file, load_language(LANGUAGE))
-        loader.load_steps_impl(registry, dirname(feature.src_file), feature.use_step_defs)
+        loader.load_steps_impl(registry, os.path.dirname(feature.src_file), feature.use_step_defs)
     return registry
 
 def print_registry(registry):
@@ -57,7 +53,7 @@ def print_registry(registry):
     for keyword in ['given', 'when', 'then']:
         steps[keyword] = {}
         for step in registry.steps[keyword]:
-            path = relpath(step.get_location())
+            path = os.path.relpath(step.get_location())
             filename = path.rsplit(':', 1)[0]
             if filename not in steps[keyword]:
                 steps[keyword][filename] = []
@@ -72,8 +68,18 @@ def print_registry(registry):
 
 
 def list_steps():
+    if len(sys.argv) < 2 or sys.argv[1] in ["--help", "-h"]:
+        print >> sys.stderr, "Prints list of step definitions that are available to the feature files."
+        print >> sys.stderr, "Usage: %s [file or directory]" % sys.argv[0]
+        exit(1)
+
     file_or_dir = sys.argv[1]
-    if isdir(file_or_dir):
+    
+    if not os.path.exists(file_or_dir):
+        print >> sys.stderr, "No such file or directory: %s" % file_or_dir
+        exit(1)
+    
+    if os.path.isdir(file_or_dir):
         registry = load_dir(file_or_dir)
     else:
         registry = load_file(file_or_dir)

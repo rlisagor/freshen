@@ -2,7 +2,5 @@
 
 from freshen.commands import list_steps
 
-
-
 if __name__ == '__main__':
     list_steps()
