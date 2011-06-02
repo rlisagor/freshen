@@ -36,11 +36,11 @@ log = logging.getLogger('nose.plugins.freshen')
 __unittest = 1
 
 class ExceptionWrapper(Exception):
-    
+
     def __init__(self, e, step):
         self.e = e
         self.step = step
-    
+
     def __str__(self):
         return "\n".join(traceback.format_exception(*self.e))
 
@@ -58,11 +58,11 @@ class FreshenTestCase(unittest.TestCase):
     selenium_start = False
     no_database_interaction = False
     make_translations = True
-    required_sane_plugins = ["django", "http"]    
+    required_sane_plugins = ["django", "http"]
     django_plugin_started = False
     http_plugin_started = False
     last_step = None
-    
+
     test_type = "http"
 
     def __init__(self, step_runner, step_registry, feature, scenario, feature_suite):
@@ -71,16 +71,16 @@ class FreshenTestCase(unittest.TestCase):
         self.context = feature_suite
         self.step_registry = step_registry
         self.step_runner = step_runner
-        
+
         self.description = feature.name + ": " + scenario.name
         super(FreshenTestCase, self).__init__()
-    
+
     def setUp(self):
         #log.debug("Clearing scenario context")
         scc.clear()
         for hook_impl in self.step_registry.get_hooks('before', self.scenario.get_tags()):
             hook_impl.run(self.scenario)
-    
+
     def runTest(self):
         for step in self.scenario.iter_steps():
             try:
@@ -90,11 +90,11 @@ class FreshenTestCase(unittest.TestCase):
                 raise
             except:
                 raise ExceptionWrapper(sys.exc_info(), step)
-            
+
             for hook_impl in reversed(self.step_registry.get_hooks('after_step', self.scenario.get_tags())):
                 hook_impl.run(self.scenario)
         self.last_step = None
-    
+
     def tearDown(self):
         for hook_impl in reversed(self.step_registry.get_hooks('after', self.scenario.get_tags())):
             hook_impl.run(self.scenario)
@@ -128,12 +128,12 @@ class ParseFailure(Failure):
         return "Could not parse %s" % (self.filename)
 
 class FreshenNosePlugin(Plugin):
-    
+
     name = "freshen"
-    
+
     def options(self, parser, env):
         super(FreshenNosePlugin, self).options(parser, env)
-        
+
         parser.add_option('--tags', action='store',
                           dest='tags',
                           default=env.get('NOSE_FRESHEN_TAGS'),
@@ -148,7 +148,7 @@ class FreshenNosePlugin(Plugin):
                           help='Change the language used when reading the feature files')
         parser.add_option('--list-undefined', 
                           action="store_true",
-                          default=env.get('NOSE_FRESHEN_LIST_UNDEFINED')=='1',
+                          default=env.get('NOSE_FRESHEN_LIST_UNDEFINED') == '1',
                           dest="list_undefined",
                           help="Make a report of all undefined steps that "
                                "freshen encounters when running scenarios. "
@@ -172,13 +172,13 @@ class FreshenNosePlugin(Plugin):
         if not os.path.exists(os.path.join(dirname, ".freshenignore")):
             return True
         return None
-    
+
     def wantFile(self, filename):
         return filename.endswith(".feature") or None
-    
+
     def loadTestsFromFile(self, filename, indexes=[]):
         log.debug("Loading from file %s" % filename)
-        
+
         step_registry = StepImplRegistry(TagMatcher)
         try:
             feat = load_feature(filename, self.language)
@@ -193,7 +193,7 @@ class FreshenNosePlugin(Plugin):
         except StepImplLoadException, e:
             yield StepsLoadFailure(*e.exc, address=TestAddress(filename))
             return
-        
+
         cnt = 0
         ctx = FeatureSuite()
         for i, sc in enumerate(feat.iter_scenarios()):
@@ -201,33 +201,33 @@ class FreshenNosePlugin(Plugin):
                 if self.tagmatcher.check_match(sc.tags + feat.tags):
                     yield FreshenTestCase(StepsRunner(step_registry), step_registry, feat, sc, ctx)
                     cnt += 1
-        
+
         if not cnt:
             yield False
-    
+
     def loadTestsFromName(self, name, _=None):
         log.debug("Loading from name %s" % name)
-        
+
         if not self._is_file_with_indexes(name):
             return # let nose take care of it
-            
+
         name_without_indexes, indexes = self._split_file_in_indexes(name)
-        
+
         if not os.path.exists(name_without_indexes):
             return
-        
+
         if os.path.isfile(name_without_indexes) \
            and name_without_indexes.endswith(".feature"):
             for tc in self.loadTestsFromFile(name_without_indexes, indexes):
                 yield tc
-                
+
     def _is_file_with_indexes(self, name):
         drive, tail = os.path.splitdrive(name)
         if ":" not in tail:
             return False
         else:
             return True
-        
+
     def _split_file_in_indexes(self, name_with_indexes):
         drive, tail = os.path.splitdrive(name_with_indexes)
         parts = tail.split(":")
@@ -235,7 +235,7 @@ class FreshenNosePlugin(Plugin):
         indexes = []
         indexes = set(int(p) for p in parts)
         return (name_without_indexes, indexes)
-        
+
     def describeTest(self, test):
         if isinstance(test.test, FreshenTestCase):
             return test.test.description
@@ -250,29 +250,29 @@ class FreshenNosePlugin(Plugin):
             elif not ec is UndefinedStepImpl and hasattr(test.test, 'last_step'):
                 message = "%s\n\n%s" % (str(ev), self._formatSteps(test, test.test.last_step))
                 return (ec, message, tb)
-    
+
     formatError = formatFailure
-    
+
     def prepareTestResult(self, result):
         # Patch the result handler with an addError method that saves
         # UndefinedStepImpl exceptions for reporting later.
         if self.undefined_steps is not None:
             plugin = self
             def _addError(self, test, err):
-                ec,ev,tb = err
+                ec, ev, tb = err
                 if isclass(ec) and issubclass(ec, UndefinedStepImpl):
-                    plugin.undefined_steps.append((test,ec,ev,tb))
+                    plugin.undefined_steps.append((test, ec, ev, tb))
                 self._old_addError(test, err)
             result._old_addError = result.addError
             result.addError = instancemethod(_addError, result, result.__class__)
-    
+
     def report(self, stream):
         if self.undefined_steps:
             stream.write("======================================================================\n")
             stream.write("Tests with undefined steps\n")
             stream.write("----------------------------------------------------------------------\n")
             for test, ec, ev, tb in self.undefined_steps:
-                stream.write(self._formatSteps(test, ev.step, False)+"\n\n")
+                stream.write(self._formatSteps(test, ev.step, False) + "\n\n")
             stream.write("You can implement step definitions for the missing steps with these snippets:\n\n")
             uniq_steps = set(s[2].step for s in self.undefined_steps)
             for step in uniq_steps:
@@ -281,13 +281,13 @@ class FreshenNosePlugin(Plugin):
                 stream.write('def %s_%s():\n' % (step.step_type,
                                                  re.sub('[^\w]', '_', step.match).lower()))
                 stream.write('    # code here\n\n')
-    
+
     def _formatSteps(self, test, failed_step, failure=True):
         ret = []
         ret.append(FreshenPrettyPrint.feature(test.test.feature))
         ret.append(FreshenPrettyPrint.scenario(test.test.scenario))
         found = False
-        for step in test.test.scenario.iter_steps():            
+        for step in test.test.scenario.iter_steps():
             if step == failed_step:
                 found = True
                 if failure:
@@ -299,4 +299,4 @@ class FreshenNosePlugin(Plugin):
             else:
                 ret.append(FreshenPrettyPrint.step_passed(step))
         return "\n".join(ret)
-    
+
