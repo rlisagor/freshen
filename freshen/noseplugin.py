@@ -1,6 +1,11 @@
 #-*- coding: utf8 -*-
 
-import unittest
+try:
+    # use twisted tests if available (support for async testing)
+    from twisted.trial.unittest import TestCase
+except:
+    from unittest import TestCase
+
 import sys
 import os
 import logging
@@ -50,7 +55,7 @@ class FeatureSuite(object):
         #log.debug("Clearing feature context")
         ftc.clear()
 
-class FreshenTestCase(unittest.TestCase):
+class FreshenTestCase(TestCase):
 
     start_live_server = True
     database_single_transaction = True
