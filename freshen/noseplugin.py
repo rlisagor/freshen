@@ -6,6 +6,7 @@ try:
 except:
     from unittest import TestCase
 
+
 import sys
 import os
 import logging
@@ -87,10 +88,16 @@ class FreshenTestCase(TestCase):
             hook_impl.run(self.scenario)
 
     def runTest(self):
+        deferreds = []
         for step in self.scenario.iter_steps():
             try:
                 self.last_step = step
-                self.step_runner.run_step(step)
+                deferred = self.step_runner.run_step(step)
+                try:
+                    if isinstance(deferred, Deferred):
+                        deferreds.append(deferred)
+                except NameError:
+                    pass
             except (AssertionError, UndefinedStepImpl, ExceptionWrapper):
                 raise
             except:
@@ -99,6 +106,12 @@ class FreshenTestCase(TestCase):
             for hook_impl in reversed(self.step_registry.get_hooks('after_step', self.scenario.get_tags())):
                 hook_impl.run(self.scenario)
         self.last_step = None
+        if len(deferreds) == 1:
+            return deferreds[0]
+        elif len(deferreds) > 1:
+            return DeferredList(deferreds)
+        else:
+            return None
 
     def tearDown(self):
         for hook_impl in reversed(self.step_registry.get_hooks('after', self.scenario.get_tags())):

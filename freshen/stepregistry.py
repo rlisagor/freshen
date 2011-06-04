@@ -44,11 +44,11 @@ class StepImpl(object):
                 del self.re_spec
 
     def run(self, *args, **kwargs):
-        self.func(*args, **kwargs)
+        return self.func(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
-        self.func(*args, **kwargs)
-    
+        return self.func(*args, **kwargs)
+
     def match(self, match):
         if not hasattr(self, 're_spec'):
             self.re_spec = re.compile(self.spec)
