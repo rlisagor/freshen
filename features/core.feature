@@ -42,7 +42,11 @@ Feature: Freshen core
             raise Exception("FAIL")
         Exception: FAIL
 
-        >> in "failing" # examples{sep}self_test{sep}features{sep}sample.feature:18
+        @one
+        Feature: Sample
+            @four
+            Scenario: Failing
+                given failing                            # examples{sep}self_test{sep}features{sep}sample.feature:18
 
         ----------------------------------------------------------------------
         Ran 3 tests in {time}
@@ -69,7 +73,10 @@ Feature: Freshen core
             raise Exception("FAIL")
         Exception: FAIL
 
-        >> in "failing without a table" # examples{sep}self_test{sep}features{sep}outline_sample.feature:6
+        Feature: Outline Sample
+            Scenario: Test state
+                given failing without a table            # examples/self_test/features/outline_sample.feature:6
+                given passing without a table            # examples/self_test/features/outline_sample.feature:7
 
         ----------------------------------------------------------------------
         Ran 4 tests in {time}

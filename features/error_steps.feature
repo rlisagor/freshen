@@ -2,9 +2,9 @@ Feature: Error steps
     In order to speed up development
     It is useful to see a verbose report of which step has failed
     
-    Scenario: Error steps
-      When I run nose -v --tags @one --error-steps examples/self_test
-      Then it should fail with
+    Scenario: Colorized output
+      When I run nose -v --tags @one examples/self_test
+      Then it should fail with colorized output
           """
           Sample: Missing ... UNDEFINED: "missing" # examples{sep}self_test{sep}features{sep}sample.feature:7
           Sample: Passing ... ok

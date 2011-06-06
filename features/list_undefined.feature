@@ -4,7 +4,7 @@ Feature: List undefined steps
   
   Scenario: List undefined
     When I run nose -v --tags @one --list-undefined examples/self_test
-    Then it should fail with
+    Then it should fail with colorized output
         """
         Sample: Missing ... UNDEFINED: "missing" # examples{sep}self_test{sep}features{sep}sample.feature:7
         Sample: Passing ... ok
@@ -20,7 +20,11 @@ Feature: List undefined steps
             raise Exception("FAIL")
         Exception: FAIL
         
-        >> in "failing" # examples{sep}self_test{sep}features{sep}sample.feature:18
+        [36m@one[0m
+        Feature: Sample
+            [36m@four[0m
+            Scenario: Failing
+                [31mgiven failing                           [0m [2m# examples{sep}self_test{sep}features{sep}sample.feature:18[0m
         
         ======================================================================
         Tests with undefined steps

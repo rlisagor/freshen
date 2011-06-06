@@ -32,7 +32,11 @@ Feature: Tagging
             raise Exception("FAIL")
         Exception: FAIL
         
-        >> in "failing" # examples{sep}self_test{sep}features{sep}sample.feature:18
+        @one
+        Feature: Sample
+            @four
+            Scenario: Failing
+                given failing                            # examples{sep}self_test{sep}features{sep}sample.feature:18
         
         ----------------------------------------------------------------------
         Ran 3 tests in {time}
@@ -56,7 +60,11 @@ Feature: Tagging
         raise Exception("FAIL")
     Exception: FAIL
     
-    >> in "failing" # examples{sep}self_test{sep}features{sep}sample.feature:18
+    @one
+    Feature: Sample
+        @four
+        Scenario: Failing
+            given failing                            # examples{sep}self_test{sep}features{sep}sample.feature:18
     
     ----------------------------------------------------------------------
     Ran 1 test in {time}

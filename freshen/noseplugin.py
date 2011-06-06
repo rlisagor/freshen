@@ -125,10 +125,11 @@ class FreshenNosePlugin(Plugin):
                                "match the given tags. Should be a comma-separated "
                                "list. Each tag can be prefixed with a ~ to negate "
                                "[NOSE_FRESHEN_TAGS]")
-        parser.add_option('--language', action="store", dest='language',
-            default='en',
-            help='Change the language used when reading the feature files',
-        )
+        parser.add_option('--language',
+                          action="store",
+                          dest='language',
+                          default='en',
+                          help='Change the language used when reading the feature files')
         parser.add_option('--list-undefined', 
                           action="store_true",
                           default=env.get('NOSE_FRESHEN_LIST_UNDEFINED')=='1',
@@ -136,12 +137,6 @@ class FreshenNosePlugin(Plugin):
                           help="Make a report of all undefined steps that "
                                "freshen encounters when running scenarios. "
                                "[NOSE_FRESHEN_LIST_UNDEFINED]")
-        parser.add_option('--error-steps',
-                          action="store_true",
-                          default=env.get('NOSE_FRESHEN_ERROR_STEPS')=='1',
-                          dest='error_steps',
-                          help="Show the location of steps that fail/error. "
-                               "[NOSE_FRESHEN_ERROR_STEPS]")
 
     def configure(self, options, config):
         super(FreshenNosePlugin, self).configure(options, config)
@@ -156,7 +151,6 @@ class FreshenNosePlugin(Plugin):
             self.undefined_steps = []
         else:
             self.undefined_steps = None
-        self.error_steps = options.error_steps
     
     def wantDirectory(self, dirname):
         if not os.path.exists(os.path.join(dirname, ".freshenignore")):
@@ -230,15 +224,11 @@ class FreshenNosePlugin(Plugin):
             ec, ev, tb = err
             if ec is ExceptionWrapper and isinstance(ev, Exception):
                 orig_ec, orig_ev, orig_tb = ev.e
-                if self.error_steps:
-                    message = "%s\n\n%s" % (str(orig_ev), self._formatSteps(test, ev.step))
-                    return (orig_ec, message, orig_tb)
-                else:
-                    return (orig_ec, str(orig_ev) + '\n\n>> in "%s" # %s' % (ev.step.match, ev.step.source_location()), orig_tb)
+                message = "%s\n\n%s" % (str(orig_ev), self._formatSteps(test, ev.step))
+                return (orig_ec, message, orig_tb)
             elif not ec is UndefinedStepImpl and hasattr(test.test, 'last_step'):
-                if self.error_steps:
-                    message = "%s\n\n%s" % (str(ev), self._formatSteps(test, test.test.last_step))
-                    return (ec, message, tb)
+                message = "%s\n\n%s" % (str(ev), self._formatSteps(test, test.test.last_step))
+                return (ec, message, tb)
     
     formatError = formatFailure
     

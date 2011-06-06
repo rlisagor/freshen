@@ -56,8 +56,7 @@ def check_outcome(exp_status):
     elif scc.status != 0:
         raise Exception("Failed with exit status %d\nOUTPUT:\n%s" % (scc.status, scc.output))
 
-@Then("^it should (pass|fail) with$")
-def check_outcome_with(exp_output, exp_status):
+def _check_outcome_with(exp_output, exp_status):
     run_steps("Then it should %s" % exp_status)
     
     exp_output = exp_output.replace("{cwd}", scc.cwd)
@@ -66,4 +65,14 @@ def check_outcome_with(exp_output, exp_status):
     if scc.is_traceback:
         exp_output = exp_output.replace("{traceback_trace}", scc.traceback)
     assert_equals(exp_output, scc.output)
+
+@Then("^it should (pass|fail) with$")
+def check_outcome_with(exp_output, exp_status):
+    # Strip color codes out first, we don't care
+    scc.output = re.sub("\033\\[[0-9]*m", '', scc.output)
+    return _check_outcome_with(exp_output, exp_status)
+
+@Then("^it should (pass|fail) with colorized output$")
+def check_outcome_with_colorized(exp_output, exp_status):
+    return _check_outcome_with(exp_output, exp_status)
 
