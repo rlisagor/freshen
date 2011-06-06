@@ -4,6 +4,9 @@ import unittest
 import sys
 import os
 import logging
+import re
+import traceback
+from new import instancemethod
 
 from pyparsing import ParseException
 
@@ -12,10 +15,19 @@ from nose.plugins.skip import SkipTest
 from nose.plugins.errorclass import ErrorClass, ErrorClassPlugin
 from nose.selector import TestAddress
 from nose.failure import Failure
+from nose.util import isclass
 
 from freshen.core import TagMatcher, load_language, load_feature, StepsRunner
 from freshen.context import *
+from freshen.prettyprint import FreshenPrettyPrint
 from freshen.stepregistry import StepImplLoader, StepImplRegistry, UndefinedStepImpl
+
+try:
+    # use colorama for cross-platform colored text, if available
+    import colorama
+    colorama.init()
+except ImportError:
+    colorama = None
 
 log = logging.getLogger('nose.plugins.freshen')
 
@@ -27,6 +39,9 @@ class ExceptionWrapper(Exception):
     def __init__(self, e, step):
         self.e = e
         self.step = step
+    
+    def __str__(self):
+        return "\n".join(traceback.format_exception(*self.e))
 
 class FeatureSuite(object):
 
@@ -45,6 +60,7 @@ class FreshenTestCase(unittest.TestCase):
     required_sane_plugins = ["django", "http"]    
     django_plugin_started = False
     http_plugin_started = False
+    last_step = None
     
     test_type = "http"
 
@@ -67,6 +83,7 @@ class FreshenTestCase(unittest.TestCase):
     def runTest(self):
         for step in self.scenario.iter_steps():
             try:
+                self.last_step = step
                 self.step_runner.run_step(step)
             except (AssertionError, UndefinedStepImpl, ExceptionWrapper):
                 raise
@@ -75,6 +92,7 @@ class FreshenTestCase(unittest.TestCase):
             
             for hook_impl in reversed(self.step_registry.get_hooks('after_step', self.scenario.get_tags())):
                 hook_impl.run(self.scenario)
+        self.last_step = None
     
     def tearDown(self):
         for hook_impl in reversed(self.step_registry.get_hooks('after', self.scenario.get_tags())):
@@ -111,6 +129,19 @@ class FreshenNosePlugin(Plugin):
             default='en',
             help='Change the language used when reading the feature files',
         )
+        parser.add_option('--list-undefined', 
+                          action="store_true",
+                          default=env.get('NOSE_FRESHEN_LIST_UNDEFINED')=='1',
+                          dest="list_undefined",
+                          help="Make a report of all undefined steps that "
+                               "freshen encounters when running scenarios. "
+                               "[NOSE_FRESHEN_LIST_UNDEFINED]")
+        parser.add_option('--error-steps',
+                          action="store_true",
+                          default=env.get('NOSE_FRESHEN_ERROR_STEPS')=='1',
+                          dest='error_steps',
+                          help="Show the location of steps that fail/error. "
+                               "[NOSE_FRESHEN_ERROR_STEPS]")
 
     def configure(self, options, config):
         super(FreshenNosePlugin, self).configure(options, config)
@@ -121,6 +152,11 @@ class FreshenNosePlugin(Plugin):
         if not self.language:
             print >> sys.stderr, "Error: language '%s' not available" % options.language
             exit(1)
+        if options.list_undefined:
+            self.undefined_steps = []
+        else:
+            self.undefined_steps = None
+        self.error_steps = options.error_steps
     
     def wantDirectory(self, dirname):
         if not os.path.exists(os.path.join(dirname, ".freshenignore")):
@@ -194,8 +230,62 @@ class FreshenNosePlugin(Plugin):
             ec, ev, tb = err
             if ec is ExceptionWrapper and isinstance(ev, Exception):
                 orig_ec, orig_ev, orig_tb = ev.e
-                return (orig_ec, str(orig_ev) + '\n\n>> in "%s" # %s' % (ev.step.match, ev.step.source_location()), orig_tb)
+                if self.error_steps:
+                    message = "%s\n\n%s" % (str(orig_ev), self._formatSteps(test, ev.step))
+                    return (orig_ec, message, orig_tb)
+                else:
+                    return (orig_ec, str(orig_ev) + '\n\n>> in "%s" # %s' % (ev.step.match, ev.step.source_location()), orig_tb)
+            elif not ec is UndefinedStepImpl and hasattr(test.test, 'last_step'):
+                if self.error_steps:
+                    message = "%s\n\n%s" % (str(ev), self._formatSteps(test, test.test.last_step))
+                    return (ec, message, tb)
     
     formatError = formatFailure
-
-
+    
+    def prepareTestResult(self, result):
+        # Patch the result handler with an addError method that saves
+        # UndefinedStepImpl exceptions for reporting later.
+        if self.undefined_steps is not None:
+            plugin = self
+            def _addError(self, test, err):
+                ec,ev,tb = err
+                if isclass(ec) and issubclass(ec, UndefinedStepImpl):
+                    plugin.undefined_steps.append((test,ec,ev,tb))
+                self._old_addError(test, err)
+            result._old_addError = result.addError
+            result.addError = instancemethod(_addError, result, result.__class__)
+    
+    def report(self, stream):
+        if self.undefined_steps:
+            stream.write("======================================================================\n")
+            stream.write("Tests with undefined steps\n")
+            stream.write("----------------------------------------------------------------------\n")
+            for test, ec, ev, tb in self.undefined_steps:
+                stream.write(self._formatSteps(test, ev.step, False)+"\n\n")
+            stream.write("You can implement step definitions for the missing steps with these snippets:\n\n")
+            uniq_steps = set(s[2].step for s in self.undefined_steps)
+            for step in uniq_steps:
+                stream.write('@%s(r"^%s$")\n' % (self.language.words(step.step_type)[0],
+                                                 step.match))
+                stream.write('def %s_%s():\n' % (step.step_type,
+                                                 re.sub('[^\w]', '_', step.match).lower()))
+                stream.write('    # code here\n\n')
+    
+    def _formatSteps(self, test, failed_step, failure=True):
+        ret = []
+        ret.append(FreshenPrettyPrint.feature(test.test.feature))
+        ret.append(FreshenPrettyPrint.scenario(test.test.scenario))
+        found = False
+        for step in test.test.scenario.iter_steps():            
+            if step == failed_step:
+                found = True
+                if failure:
+                    ret.append(FreshenPrettyPrint.step_failed(step))
+                else:
+                    ret.append(FreshenPrettyPrint.step_undefined(step))
+            elif found:
+                ret.append(FreshenPrettyPrint.step_notrun(step))
+            else:
+                ret.append(FreshenPrettyPrint.step_passed(step))
+        return "\n".join(ret)
+    
