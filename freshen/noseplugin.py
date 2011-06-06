@@ -20,7 +20,8 @@ from nose.util import isclass
 from freshen.core import TagMatcher, load_language, load_feature, StepsRunner
 from freshen.context import *
 from freshen.prettyprint import FreshenPrettyPrint
-from freshen.stepregistry import StepImplLoader, StepImplRegistry, UndefinedStepImpl
+from freshen.stepregistry import StepImplLoader, StepImplRegistry
+from freshen.stepregistry import UndefinedStepImpl, StepImplLoadException
 
 try:
     # use colorama for cross-platform colored text, if available
@@ -111,6 +112,21 @@ class FreshenErrorPlugin(ErrorClassPlugin):
         pass
 
 
+class StepsLoadFailure(Failure):
+
+    def __str__(self):
+        return "Could not load steps for %s" % self.address()
+
+class ParseFailure(Failure):
+
+    def __init__(self, parse_exception, tb, filename):
+        self.parse_exception = parse_exception
+        self.filename = filename
+        super(ParseFailure, self).__init__(parse_exception.__class__, parse_exception, tb)
+
+    def __str__(self):
+        return "Could not parse %s" % (self.filename)
+
 class FreshenNosePlugin(Plugin):
     
     name = "freshen"
@@ -167,10 +183,15 @@ class FreshenNosePlugin(Plugin):
         try:
             feat = load_feature(filename, self.language)
             path = os.path.dirname(filename)
-            self.impl_loader.load_steps_impl(step_registry, path, feat.use_step_defs)
         except ParseException, e:
             ec, ev, tb = sys.exc_info()
-            yield Failure(ParseException, ParseException(e.pstr, e.loc, e.msg + " in %s" % filename), tb)
+            yield ParseFailure(e, tb, filename)
+            return
+
+        try:
+            self.impl_loader.load_steps_impl(step_registry, path, feat.use_step_defs)
+        except StepImplLoadException, e:
+            yield StepsLoadFailure(*e.exc, address=TestAddress(filename))
             return
         
         cnt = 0

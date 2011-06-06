@@ -107,6 +107,12 @@ class NamedTransformImpl( TransformImpl ):
     def apply_to_step( self, step ):
         step.apply_named_transform( self.name, self.in_pattern, self )
 
+
+class StepImplLoadException(Exception):
+    def __init__(self, exc):
+        self.exc = exc
+
+
 class StepImplLoader(object):
 
     def __init__(self):
@@ -141,8 +147,13 @@ class StepImplLoader(object):
                     #log.debug("Did not find step defs module '%s' in %s" % (module_name, path))
                     return
                 
-                # Modules have to be loaded with unique names or else problems arise
-                mod = imp.load_module("stepdefs_" + str(self.module_counter), *info)
+                try:
+                    # Modules have to be loaded with unique names or else problems arise
+                    mod = imp.load_module("stepdefs_" + str(self.module_counter), *info)
+                except:
+                    exc = sys.exc_info()
+                    raise StepImplLoadException(exc)
+                
                 self.module_counter += 1
                 self.modules[(path, module_name)] = mod
             
