@@ -3,6 +3,7 @@
 try:
     # use twisted tests if available (support for async testing)
     from twisted.trial.unittest import TestCase
+    from twisted.internet.defer import Deferred, DeferredList
 except:
     from unittest import TestCase
 
