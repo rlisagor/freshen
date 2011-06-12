@@ -46,7 +46,7 @@ Feature: Freshen core
         Feature: Sample
             @four
             Scenario: Failing
-                given failing                            # examples{sep}self_test{sep}features{sep}sample.feature:18
+                given failing                            # examples{sep}self_test{sep}features{sep}sample.feature:19
 
         ----------------------------------------------------------------------
         Ran 3 tests in {time}

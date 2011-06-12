@@ -24,7 +24,7 @@ Feature: Error steps
           Feature: Sample
               [36m@four[0m
               Scenario: Failing
-                  [31mgiven failing                           [0m [2m# examples{sep}self_test{sep}features{sep}sample.feature:18[0m
+                  [31mgiven failing                           [0m [2m# examples{sep}self_test{sep}features{sep}sample.feature:19[0m
 
           ----------------------------------------------------------------------
           Ran 3 tests in {time}
