@@ -42,7 +42,7 @@ class ExceptionWrapper(Exception):
         self.step = step
 
     def __str__(self):
-        return "\n".join(traceback.format_exception(*self.e))
+        return "".join(traceback.format_exception(*self.e))
 
 class FeatureSuite(object):
 
@@ -130,6 +130,10 @@ class ParseFailure(Failure):
 class FreshenNosePlugin(Plugin):
 
     name = "freshen"
+
+    # This makes it so that freshen's formatFailure gets called before capture
+    # and logcapture - those plugins replace and obscure the true exception value
+    score = 1000
 
     def options(self, parser, env):
         super(FreshenNosePlugin, self).options(parser, env)
