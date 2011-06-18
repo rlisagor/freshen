@@ -1,38 +1,28 @@
 #-*- coding: utf8 -*-
 
-try:
-    # use twisted tests if available (support for async testing)
-    from twisted.trial.unittest import TestCase
-    from twisted.internet.defer import Deferred, DeferredList
-except:
-    from unittest import TestCase
-
-
 import sys
 import os
 import logging
 import re
-import traceback
 from new import instancemethod
 
 from pyparsing import ParseException
 
 from nose.plugins import Plugin
-from nose.plugins.skip import SkipTest
 from nose.plugins.errorclass import ErrorClass, ErrorClassPlugin
 from nose.selector import TestAddress
 from nose.failure import Failure
 from nose.util import isclass
 
 from freshen.core import TagMatcher, load_language, load_feature, StepsRunner
-from freshen.context import *
 from freshen.prettyprint import FreshenPrettyPrint
 from freshen.stepregistry import StepImplLoader, StepImplRegistry
 from freshen.stepregistry import UndefinedStepImpl, StepImplLoadException
+from freshen.test.base import FeatureSuite, FreshenTestCase, ExceptionWrapper
 
 try:
     # use colorama for cross-platform colored text, if available
-    import colorama
+    import colorama # pylint: disable=F0401
     colorama.init()
 except ImportError:
     colorama = None
@@ -41,82 +31,6 @@ log = logging.getLogger('nose.plugins.freshen')
 
 # This line ensures that frames from this file will not be shown in tracebacks
 __unittest = 1
-
-class ExceptionWrapper(Exception):
-
-    def __init__(self, e, step):
-        self.e = e
-        self.step = step
-
-    def __str__(self):
-        return "".join(traceback.format_exception(*self.e))
-
-class FeatureSuite(object):
-
-    def setUp(self):
-        #log.debug("Clearing feature context")
-        ftc.clear()
-
-class FreshenTestCase(TestCase):
-
-    start_live_server = True
-    database_single_transaction = True
-    database_flush = True
-    selenium_start = False
-    no_database_interaction = False
-    make_translations = True
-    required_sane_plugins = ["django", "http"]
-    django_plugin_started = False
-    http_plugin_started = False
-    last_step = None
-
-    test_type = "http"
-
-    def __init__(self, step_runner, step_registry, feature, scenario, feature_suite):
-        self.feature = feature
-        self.scenario = scenario
-        self.context = feature_suite
-        self.step_registry = step_registry
-        self.step_runner = step_runner
-
-        self.description = feature.name + ": " + scenario.name
-        super(FreshenTestCase, self).__init__()
-
-    def setUp(self):
-        #log.debug("Clearing scenario context")
-        scc.clear()
-        for hook_impl in self.step_registry.get_hooks('before', self.scenario.get_tags()):
-            hook_impl.run(self.scenario)
-
-    def runTest(self):
-        deferreds = []
-        for step in self.scenario.iter_steps():
-            try:
-                self.last_step = step
-                deferred = self.step_runner.run_step(step)
-                try:
-                    if isinstance(deferred, Deferred):
-                        deferreds.append(deferred)
-                except NameError:
-                    pass
-            except (AssertionError, UndefinedStepImpl, ExceptionWrapper):
-                raise
-            except:
-                raise ExceptionWrapper(sys.exc_info(), step)
-
-            for hook_impl in reversed(self.step_registry.get_hooks('after_step', self.scenario.get_tags())):
-                hook_impl.run(self.scenario)
-        self.last_step = None
-        if len(deferreds) == 1:
-            return deferreds[0]
-        elif len(deferreds) > 1:
-            return DeferredList(deferreds)
-        else:
-            return None
-
-    def tearDown(self):
-        for hook_impl in reversed(self.step_registry.get_hooks('after', self.scenario.get_tags())):
-            hook_impl.run(self.scenario)
 
 
 class FreshenErrorPlugin(ErrorClassPlugin):
@@ -190,6 +104,7 @@ class FreshenNosePlugin(Plugin):
             self.undefined_steps = []
         else:
             self.undefined_steps = None
+        self._test_class = None
     
     def wantDirectory(self, dirname):
         if not os.path.exists(os.path.join(dirname, ".freshenignore")):
@@ -198,6 +113,33 @@ class FreshenNosePlugin(Plugin):
 
     def wantFile(self, filename):
         return filename.endswith(".feature") or None
+
+    def _loadTestForFeature(self, feature):
+        """Chooses the test base class appropriate
+        for the given feature.
+        
+        This method supports late import of the
+        test base class so that userspace code (e.g.
+        in the support environment) can configure
+        the test framework first (e.g. in the case
+        of twisted tests to install a custom
+        reactor implementation).
+        
+        The current simplistic implementation chooses
+        a twisted-enabled test class if twisted is
+        present and returns a PyUnit-based test otherwise.
+        
+        In the future this can be extended to support
+        more flexible (e.g. user-defined) test classes
+        on a per-feature basis."""
+        if self._test_class is None:
+            try:
+                from freshen.test.twisted import TwistedTestCase
+                self._test_class = TwistedTestCase
+            except ImportError:
+                from freshen.test.pyunit import PyunitTestCase
+                self._test_class = PyunitTestCase
+        return self._test_class
 
     def loadTestsFromFile(self, filename, indexes=[]):
         log.debug("Loading from file %s" % filename)
@@ -222,7 +164,8 @@ class FreshenNosePlugin(Plugin):
         for i, sc in enumerate(feat.iter_scenarios()):
             if (not indexes or (i + 1) in indexes):
                 if self.tagmatcher.check_match(sc.tags + feat.tags):
-                    yield FreshenTestCase(StepsRunner(step_registry), step_registry, feat, sc, ctx)
+                    testclass = self._loadTestForFeature(feat)
+                    yield testclass(StepsRunner(step_registry), step_registry, feat, sc, ctx)
                     cnt += 1
 
         if not cnt:
@@ -235,7 +178,6 @@ class FreshenNosePlugin(Plugin):
             return # let nose take care of it
 
         name_without_indexes, indexes = self._split_file_in_indexes(name)
-
         if not os.path.exists(name_without_indexes):
             return
 
