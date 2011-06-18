@@ -18,7 +18,7 @@ class TwistedTestCase(FreshenTestCase, TestCase):
     @inlineCallbacks
     def runTest(self):
         for step in self.scenario.iter_steps():
-            result = self.runStep(step)
+            result = self.runStep(step, 3)
             if isinstance(result, Deferred):
                 yield result
         self.last_step = None

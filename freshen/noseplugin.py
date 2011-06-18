@@ -83,7 +83,7 @@ class FreshenNosePlugin(Plugin):
                           dest='language',
                           default='en',
                           help='Change the language used when reading the feature files')
-        parser.add_option('--list-undefined', 
+        parser.add_option('--list-undefined',
                           action="store_true",
                           default=env.get('NOSE_FRESHEN_LIST_UNDEFINED') == '1',
                           dest="list_undefined",
@@ -105,7 +105,7 @@ class FreshenNosePlugin(Plugin):
         else:
             self.undefined_steps = None
         self._test_class = None
-    
+
     def wantDirectory(self, dirname):
         if not os.path.exists(os.path.join(dirname, ".freshenignore")):
             return True
@@ -134,7 +134,7 @@ class FreshenNosePlugin(Plugin):
         on a per-feature basis."""
         if self._test_class is None:
             try:
-                from freshen.test.twisted import TwistedTestCase
+                from freshen.test.async import TwistedTestCase
                 self._test_class = TwistedTestCase
             except ImportError:
                 from freshen.test.pyunit import PyunitTestCase
