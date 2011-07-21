@@ -55,7 +55,8 @@ class ParseFailure(Failure):
     def __init__(self, parse_exception, tb, filename):
         self.parse_exception = parse_exception
         self.filename = filename
-        super(ParseFailure, self).__init__(parse_exception.__class__, parse_exception, tb)
+        address = TestAddress(filename).totuple()
+        super(ParseFailure, self).__init__(parse_exception.__class__, parse_exception, tb, address)
 
     def __str__(self):
         return "Could not parse %s" % (self.filename)
@@ -149,7 +150,7 @@ class FreshenNosePlugin(Plugin):
             feat = load_feature(filename, self.language)
             path = os.path.dirname(filename)
         except ParseException, e:
-            ec, ev, tb = sys.exc_info()
+            _, _, tb = sys.exc_info()
             yield ParseFailure(e, tb, filename)
             return
 
