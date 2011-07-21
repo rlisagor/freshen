@@ -71,10 +71,10 @@ class HookImpl(object):
         return "<Hook: @%s %s(...)>" % (self.cb_type, self.func.func_name)
 
     def run(self, scenario):
-        self.func(scenario)
+        return self.func(scenario)
 
     def __call__(self, *args, **kwargs):
-        self.func(*args, **kwargs)
+        return self.func(*args, **kwargs)
 
 class TransformImpl(object):
 
