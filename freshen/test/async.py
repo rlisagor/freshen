@@ -8,6 +8,8 @@ from twisted.internet.defer import inlineCallbacks, Deferred
 class TwistedTestCase(FreshenTestCase, TestCase):
     """Support asynchronous feature tests."""
 
+    timeout = 240
+
     # pylint: disable=R0913
     def __init__(self, step_runner, step_registry,
                  feature, scenario, feature_suite):
