@@ -13,7 +13,16 @@ class PyunitTestCase(FreshenTestCase, TestCase):
                                  feature, scenario, feature_suite)
         TestCase.__init__(self)
 
+    def setUp(self):
+        super(PyunitTestCase, self).setUp()
+        for hook_impl in self.step_registry.get_hooks('before', self.scenario.get_tags()):
+            hook_impl.run(self.scenario)
+
     def runTest(self):
         for step in self.scenario.iter_steps():
             self.runStep(step, 3)
         self.last_step = None
+
+    def tearDown(self):
+        for hook_impl in reversed(self.step_registry.get_hooks('after', self.scenario.get_tags())):
+            hook_impl.run(self.scenario)

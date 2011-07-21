@@ -56,8 +56,6 @@ class FreshenTestCase(object):
     def setUp(self):
         #log.debug("Clearing scenario context")
         scc.clear()
-        for hook_impl in self.step_registry.get_hooks('before', self.scenario.get_tags()):
-            hook_impl.run(self.scenario)
 
     def runAfterStepHooks(self):
         for hook_impl in reversed(self.step_registry.get_hooks('after_step', self.scenario.get_tags())):
@@ -75,7 +73,3 @@ class FreshenTestCase(object):
 
     def runTest(self):
         raise NotImplementedError('Must be implemented by subclasses')
-
-    def tearDown(self):
-        for hook_impl in reversed(self.step_registry.get_hooks('after', self.scenario.get_tags())):
-            hook_impl.run(self.scenario)
