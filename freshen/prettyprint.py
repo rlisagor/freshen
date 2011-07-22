@@ -1,5 +1,13 @@
 #-*- coding: utf8 -*-
 
+try:
+    import curses
+    curses.setupterm()
+    COLOR_SUPPORT = (curses.tigetnum('colors') > 0)
+except Exception:
+    COLOR_SUPPORT = False
+
+
 COLORS = {
     'bold': '1',
     'grey': '2',
@@ -24,6 +32,8 @@ COMMENT = 'grey'
 NOTRUN = 'normal'
 
 def colored(text, colorspec):
+    if not COLOR_SUPPORT:
+        return text
     colors = [c.strip() for c in colorspec.split(',')]
     result = ""
     for c in colors:
