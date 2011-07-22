@@ -156,7 +156,7 @@ class FreshenNosePlugin(Plugin):
         try:
             self.impl_loader.load_steps_impl(step_registry, path, feat.use_step_defs)
         except StepImplLoadException, e:
-            yield StepsLoadFailure(*e.exc, address=TestAddress(filename))
+            yield StepsLoadFailure(address=TestAddress(filename), *e.exc)
             return
 
         cnt = 0
