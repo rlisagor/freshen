@@ -16,7 +16,7 @@ setup(
     license = "GPL",
     packages = ["freshen"],
     package_data = {'freshen': ['languages.yml']},
-    install_requires=['pyparsing>=1.5.0', 'PyYAML', 'nose>=0.11.1'],
+    install_requires = ['pyparsing>=1.5.0', 'PyYAML', 'nose>=0.11.1'],
     entry_points = {
         'nose.plugins.0.10': [
             'freshen = freshen.noseplugin:FreshenNosePlugin',
