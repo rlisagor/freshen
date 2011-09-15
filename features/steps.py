@@ -76,3 +76,10 @@ def check_outcome_with(exp_output, exp_status):
 def check_outcome_with_colorized(exp_output, exp_status):
     return _check_outcome_with(exp_output, exp_status)
 
+@Then("^it should (pass|fail) with xunit file (\S+)$")
+def check_outcome_with_xunit(exp_status, xunit_file):
+    run_steps("Then it should %s" % exp_status)
+    assert_true(os.path.exists(xunit_file))
+
+    from xml.dom.minidom import parse
+    scc.xunit_report = parse(xunit_file)

@@ -2,12 +2,12 @@
 @one
 Feature: Sample
 
-    @two @three
+  @two @three
   Scenario: Missing
     Given missing
 
-# Scenario comment
-@three
+  # Scenario comment
+  @three
   Scenario: Passing
     Given passing
       |a|b|
