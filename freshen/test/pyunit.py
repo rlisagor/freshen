@@ -18,7 +18,7 @@ class PyunitTestCase(FreshenTestCase, TestCase):
         for hook_impl in self.step_registry.get_hooks('before', self.scenario.get_tags()):
             hook_impl.run(self.scenario)
 
-    def runTest(self):
+    def runScenario(self):
         for step in self.scenario.iter_steps():
             self.runStep(step, 3)
         self.last_step = None

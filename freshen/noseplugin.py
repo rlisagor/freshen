@@ -165,7 +165,7 @@ class FreshenNosePlugin(Plugin):
         for i, sc in enumerate(feat.iter_scenarios()):
             if (not indexes or (i + 1) in indexes):
                 if self.tagmatcher.check_match(sc.tags + feat.tags):
-                    test_class = type(feat.name, (self._loadTestForFeature(feat), ), {})
+                    test_class = type(feat.name, (self._loadTestForFeature(feat), ), {sc.name: lambda self: self.runScenario()})
                     yield test_class(StepsRunner(step_registry), step_registry, feat, sc, ctx)
                     cnt += 1
 

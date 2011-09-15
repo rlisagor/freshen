@@ -27,7 +27,7 @@ class TwistedTestCase(FreshenTestCase, TestCase):
         return self._run_deferred(hooks)
 
     @inlineCallbacks
-    def runTest(self):
+    def runScenario(self):
         """Run the test."""
         steps = []
         for step in self.scenario.iter_steps():
