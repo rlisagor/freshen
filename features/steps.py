@@ -83,3 +83,21 @@ def check_outcome_with_xunit(exp_status, xunit_file):
 
     from xml.dom.minidom import parse
     scc.xunit_report = parse(xunit_file)
+
+status_tests = {
+    'passed': lambda t: not t.hasChildNodes(),
+    'failed': lambda t: t.hasChildNodes() and
+                        t.firstChild.hasAttributes() and
+                        not t.firstChild.getAttribute('type').startswith('freshen'),
+    'undefined': lambda t:  t.hasChildNodes() and
+                            t.firstChild.hasAttributes() and
+                            t.firstChild.getAttribute('type') == 'freshen.stepregistry.UndefinedStepImpl'
+}
+
+@Then("^it should report (\w+) from (\w+) as (passed|failed|undefined)$")
+def check_xunit_report(scenario, feature, exp_status):
+    testcase = filter(  lambda t: t.getAttribute('classname') == 'freshen.noseplugin.' + feature and
+                                  t.getAttribute('name') == scenario,
+                        scc.xunit_report.getElementsByTagName('testcase'))[0]
+
+    assert_true(status_tests[exp_status](testcase))
