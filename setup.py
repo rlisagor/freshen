@@ -14,7 +14,7 @@ setup(
     author_email = "rlisagor+freshen@gmail.com",
     url = "http://github.com/rlisagor/freshen",
     license = "GPL",
-    packages = ["freshen"],
+    packages = ["freshen", "freshen.test"],
     package_data = {'freshen': ['languages.yml']},
     install_requires=['pyparsing>=1.5.0', 'PyYAML', 'nose>=0.11.1'],
     entry_points = {
