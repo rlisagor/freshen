@@ -51,7 +51,6 @@ class FreshenTestCase(object):
         self.step_runner = step_runner
 
         self.description = feature.name + ": " + scenario.name
-        super(FreshenTestCase, self).__init__(scenario.name)
 
     def setUp(self):
         #log.debug("Clearing scenario context")
