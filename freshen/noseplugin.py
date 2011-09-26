@@ -115,7 +115,7 @@ class FreshenNosePlugin(Plugin):
     def wantFile(self, filename):
         return filename.endswith(".feature") or None
 
-    def _loadTestForFeature(self, feature):
+    def _makeTestClass(self, feature, scenario):
         """Chooses the test base class appropriate
         for the given feature.
         
@@ -140,7 +140,7 @@ class FreshenNosePlugin(Plugin):
             except ImportError:
                 from freshen.test.pyunit import PyunitTestCase
                 self._test_class = PyunitTestCase
-        return self._test_class
+        return type(feature.name, (self._test_class, ), {scenario.name: lambda self: self.runScenario()})
 
     def loadTestsFromFile(self, filename, indexes=[]):
         log.debug("Loading from file %s" % filename)
@@ -165,7 +165,7 @@ class FreshenNosePlugin(Plugin):
         for i, sc in enumerate(feat.iter_scenarios()):
             if (not indexes or (i + 1) in indexes):
                 if self.tagmatcher.check_match(sc.tags + feat.tags):
-                    test_class = type(feat.name, (self._loadTestForFeature(feat), ), {sc.name: lambda self: self.runScenario()})
+                    test_class = self._makeTestClass(feat, sc)
                     yield test_class(StepsRunner(step_registry), step_registry, feat, sc, ctx)
                     cnt += 1
 
