@@ -4,6 +4,7 @@ import sys
 import os
 import logging
 import re
+import traceback
 from new import instancemethod
 
 from pyparsing import ParseException
@@ -91,6 +92,17 @@ class FreshenNosePlugin(Plugin):
                           help="Make a report of all undefined steps that "
                                "freshen encounters when running scenarios. "
                                "[NOSE_FRESHEN_LIST_UNDEFINED]")
+        parser.add_option('--default-test-class',
+                          action="store",
+                          default=env.get('NOSE_FRESHEN_TEST_CLASS',
+                                          '@pyunit.PyunitTestCase'),
+                          dest="test_class_path",
+                          help="Python module path pointing at the class to"
+                               "use as the base for each test (scenario). "
+                               "Use '@' as the first character to make the path "
+                               "relative to freshen.test. Example: "
+                               "@pyunit.PyunitTestCase"
+                               "[NOSE_FRESHEN_TESTCASE_CLASS]")
 
     def configure(self, options, config):
         super(FreshenNosePlugin, self).configure(options, config)
@@ -105,6 +117,18 @@ class FreshenNosePlugin(Plugin):
             self.undefined_steps = []
         else:
             self.undefined_steps = None
+        
+        if options.test_class_path.startswith("@"):
+            test_class_path = "freshen.test." + options.test_class_path[1:]
+        else:
+            test_class_path = options.test_class_path
+
+        try:
+            self._default_test_class = self._load_test_class(test_class_path)
+        except Exception, e:
+            print >> sys.stderr, "Error: could not load test class '%s': " % (test_class_path)
+            print >> sys.stderr, traceback.format_exc()
+            exit(1)
         self._test_class = None
 
     def wantDirectory(self, dirname):
@@ -115,32 +139,33 @@ class FreshenNosePlugin(Plugin):
     def wantFile(self, filename):
         return filename.endswith(".feature") or None
 
+    def _load_test_class(self, path):
+        module_name, class_name = path.rsplit(".", 1)
+        __import__(module_name)
+        mod = sys.modules[module_name]
+        return getattr(mod, class_name)
+
     def _makeTestClass(self, feature, scenario):
-        """Chooses the test base class appropriate
-        for the given feature.
+        """
+        Chooses the test base class appropriate for the given feature.
         
-        This method supports late import of the
-        test base class so that userspace code (e.g.
-        in the support environment) can configure
-        the test framework first (e.g. in the case
-        of twisted tests to install a custom
+        This method supports late import of the test base class so that
+        userspace code (e.g. in the support environment) can configure the test
+        framework first (e.g. in the case of twisted tests to install a custom
         reactor implementation).
         
-        The current simplistic implementation chooses
-        a twisted-enabled test class if twisted is
-        present and returns a PyUnit-based test otherwise.
+        The current implementation uses the testcase class specified by the user
+        at the command-line.
         
-        In the future this can be extended to support
-        more flexible (e.g. user-defined) test classes
-        on a per-feature basis."""
+        In the future this can be extended to support more flexible (e.g. user-
+        defined) test classes on a per-feature basis.
+        """
         if self._test_class is None:
-            try:
-                from freshen.test.async import TwistedTestCase
-                self._test_class = TwistedTestCase
-            except ImportError:
-                from freshen.test.pyunit import PyunitTestCase
-                self._test_class = PyunitTestCase
-        return type(feature.name, (self._test_class, ), {scenario.name: lambda self: self.runScenario()})
+            # TODO: add per-feature test classes here
+            self._test_class = self._default_test_class
+            
+        return type(feature.name, (self._test_class, ),
+                    {scenario.name: lambda self: self.runScenario()})
 
     def loadTestsFromFile(self, filename, indexes=[]):
         log.debug("Loading from file %s" % filename)
