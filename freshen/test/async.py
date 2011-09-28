@@ -15,7 +15,7 @@ class TwistedTestCase(FreshenTestCase, TestCase):
                  feature, scenario, feature_suite):
         FreshenTestCase.__init__(self, step_runner, step_registry,
                                  feature, scenario, feature_suite)
-        TestCase.__init__(self)
+        TestCase.__init__(self, scenario.name)
 
     def setUp(self):
         """Initialize the test."""
@@ -27,7 +27,7 @@ class TwistedTestCase(FreshenTestCase, TestCase):
         return self._run_deferred(hooks)
 
     @inlineCallbacks
-    def runTest(self):
+    def runScenario(self):
         """Run the test."""
         steps = []
         for step in self.scenario.iter_steps():

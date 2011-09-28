@@ -51,7 +51,6 @@ class FreshenTestCase(object):
         self.step_runner = step_runner
 
         self.description = feature.name + ": " + scenario.name
-        super(FreshenTestCase, self).__init__()
 
     def setUp(self):
         #log.debug("Clearing scenario context")
@@ -71,5 +70,5 @@ class FreshenTestCase(object):
             raise ExceptionWrapper(sys.exc_info(), step, discard_frames)
         self.runAfterStepHooks()
 
-    def runTest(self):
+    def runScenario(self):
         raise NotImplementedError('Must be implemented by subclasses')
