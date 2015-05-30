@@ -1,3 +1,11 @@
+Warning
+=======
+
+This project is no longer maintained. Please consider these alternatives:
+
+* `Behave`_
+* `Lettuce`_
+
 Freshen
 =======
 
@@ -445,4 +453,5 @@ please feel free to let me know, or simply clone the repo and play around.
 .. _`Selenium`: http://seleniumhq.org/
 .. _`Django`: http://www.djangoproject.com/
 .. _`django-sane-testing`: http://devel.almad.net/trac/django-sane-testing/
-
+.. _`Lettuce`: http://lettuce.it/
+.. _`Behave`: http://pythonhosted.org/behave/
